@@ -1,6 +1,6 @@
-* robin version:
-* Python version:
-* Operating System:
+-   wandern version:
+-   Python version:
+-   Operating System:
 
 ### Description
 

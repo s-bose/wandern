@@ -1,0 +1,20 @@
+[project]
+name = "wandern"
+version = "0.0.1"
+authors = [{ name = "Shiladitya Bose", email = "shiladitya_basu@live.com" }]
+description = "Wandern is a small, no-nonsense database migration tool for python"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/s-bose/wandern"
+Issues = "https://github.com/s-bose/wandern/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

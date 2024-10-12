@@ -1,2 +1,0 @@
--- UP = {{ version_up }}
--- DOWN = {{ version_down }}

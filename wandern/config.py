@@ -9,3 +9,6 @@ class Config(TypedDict):
     username: str
     password: str
     sslmode: str
+
+    file_template: str
+    prefer_int_version: bool

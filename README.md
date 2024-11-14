@@ -36,3 +36,15 @@ For the first initial release, it should be able to do the following:
 
 For Future releases:
 1. Ability to detect dialect-specific SQL code and suggest changes
+
+
+## How to generate migration files
+
+1. run `wandern generate` to create an empty migration script with default file name.
+2. can be configured via wandern settings.
+3. can set custom file names in settings. For example, {version}_{description}_{timestamp}.sql
+
+
+### Fields that can be set
+1. `version` - version number for each migration, can be integer
+2.

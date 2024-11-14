@@ -37,3 +37,5 @@ def generate_script(
     except Exception as exc:
         print(f"error generating migration script: {exc}")
         raise exc
+
+

@@ -13,3 +13,6 @@ Description: {description}
 -- DOWN
 
 """
+
+
+DEFAULT_FILE_TEMPLATE = "{version}_{description}_{timestamp}.sql"

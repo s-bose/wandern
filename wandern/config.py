@@ -4,7 +4,7 @@ from typing import TypedDict, Literal
 class Config(TypedDict):
     dialect: Literal["postgresql"]
     host: str
-    port: int
+    port: str
     database: str
     username: str
     password: str

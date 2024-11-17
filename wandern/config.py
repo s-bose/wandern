@@ -11,4 +11,4 @@ class Config(TypedDict):
     sslmode: str
 
     file_template: str
-    prefer_int_version: bool
+    integer_version: bool

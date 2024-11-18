@@ -47,7 +47,7 @@ def init(
             password="",
             sslmode="",
             file_template=DEFAULT_FILE_TEMPLATE,
-            prefer_int_version=False,
+            integer_version=False,
         )
         json.dump(config_obj, cfg_file, indent=4)
 

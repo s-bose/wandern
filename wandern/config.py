@@ -1,7 +1,9 @@
-from typing import TypedDict, Literal
+from typing import Literal
+from dataclasses import dataclass
 
 
-class Config(TypedDict):
+@dataclass
+class Config:
     dialect: Literal["postgresql"]
     host: str
     port: str

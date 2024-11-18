@@ -13,3 +13,5 @@ Description: {description}
 -- DOWN
 
 """
+
+MIGRATION_DEFAULT_TABLE_NAME = "wandern_migrations"

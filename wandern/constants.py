@@ -15,3 +15,4 @@ Description: {description}
 """
 
 MIGRATION_DEFAULT_TABLE_NAME = "wandern_migrations"
+DEFAULT_FILE_TEMPLATE = "{version}_{description}_{timestamp}.sql"

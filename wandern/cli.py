@@ -4,9 +4,9 @@ import json
 import os
 import typer
 import rich
+from dataclasses import asdict
 
 from wandern.config import Config
-from wandern.constants import DEFAULT_FILE_TEMPLATE
 
 app = typer.Typer(rich_markup_mode="rich")
 
@@ -27,9 +27,7 @@ def init(
     along with additional migration scripts that you will generate.
     """
     if os.access(directory, os.F_OK) and os.listdir(directory):
-        logging.error(
-            f"Directory {directory} already exists and is not empty",
-        )
+        rich.print(f"[red]Directory {directory} already exists and is not empty[/red]")
         raise typer.Exit(
             code=1,
         )
@@ -46,10 +44,8 @@ def init(
             username="",
             password="",
             sslmode="",
-            file_template=DEFAULT_FILE_TEMPLATE,
-            integer_version=False,
         )
-        json.dump(config_obj, cfg_file, indent=4)
+        json.dump(asdict(config_obj), cfg_file, indent=4)
 
     rich.print(
         f"[bold][green]Initialized wandern config in {os.path.abspath(directory)}[/green][/bold]"
@@ -65,4 +61,14 @@ def generate(
         ),
     ]
 ):
+    pass
+
+
+@app.command()
+def reset():
+    """Reset all migrations.
+    Rolls back all the migrations till now
+    and removes the migration table
+    """
+
     pass

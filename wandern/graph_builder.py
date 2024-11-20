@@ -48,3 +48,11 @@ class DAGBuilder:
             pos=nx.spring_layout(self.graph, seed=42),
         )
         plt.show()
+
+    def is_graph_containing_cycles(self):
+        try:
+            cycle = nx.find_cycle(self.graph)
+        except nx.NetworkXNoCycle:
+            return False, None
+        else:
+            return True, cycle

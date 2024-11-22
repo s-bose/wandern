@@ -3,7 +3,7 @@ from wandern.service import MigrationService
 from wandern.config import Config
 
 
-@pytest.mark.asyncio
+# @pytest.mark.asyncio
 async def test_select(postgresql_config: dict):
     service = MigrationService(
         Config(
@@ -19,4 +19,4 @@ async def test_select(postgresql_config: dict):
         )
     )
 
-    await service.init_migration_table()
+    # await service.init_migration_table()

@@ -1,9 +1,10 @@
-from collections import defaultdict
 from typing import Pattern
 import os
 import re
 import networkx as nx
 from matplotlib import pyplot as plt
+
+from wandern.exceptions import DivergentbranchError
 
 
 class DAGBuilder:
@@ -56,3 +57,16 @@ class DAGBuilder:
             return False, None
         else:
             return True, cycle
+
+    def is_graph_diverging(self):
+        for node in self.graph.nodes:
+            out_edges = self.graph.out_edges(node)
+
+            out_nodes = ", ".join(node[1] for node in list(out_edges))
+
+            if len(out_edges) > 1:
+                raise DivergentbranchError(
+                    f"Diverging migration found {node} -> {out_nodes}"
+                )
+
+        return False

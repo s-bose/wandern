@@ -6,7 +6,6 @@ from wandern.constants import MIGRATION_INIT
 
 @dataclass
 class TemplateBuilderBase(abc.ABC):
-
     @abc.abstractmethod
     def build(self):
         raise NotImplementedError

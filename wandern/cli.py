@@ -68,7 +68,13 @@ def generate(
 def reset():
     """Reset all migrations.
     Rolls back all the migrations till now
-    and removes the migration table
     """
 
     pass
+
+
+@app.command()
+def deinit():
+    """Removes the migration dir and migration table.
+    DOES NOT undo the migrations. Use `reset` for that.
+    """

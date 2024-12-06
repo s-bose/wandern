@@ -50,13 +50,12 @@ class DAGBuilder:
         )
         plt.show()
 
-    def is_graph_containing_cycles(self):
+    def get_cycles(self):
         try:
-            cycle = nx.find_cycle(self.graph)
+            cycle = nx.find_cycle(self.graph, orientation="original")
+            return cycle
         except nx.NetworkXNoCycle:
-            return False, None
-        else:
-            return True, cycle
+            return None
 
     def is_graph_diverging(self):
         for node in self.graph.nodes:

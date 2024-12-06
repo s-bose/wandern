@@ -4,3 +4,7 @@ CREATE TABLE IF NOT EXISTS wandern_migration (
     down_revision varchar NULL,
 )
 """
+
+drop_migration_table: str = """
+DROP TABLE IF EXISTS wandern_migration
+"""

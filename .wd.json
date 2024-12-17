@@ -1,0 +1,14 @@
+{
+    "dialect": "postgresql",
+    "dsn": null,
+    "host": "",
+    "port": "",
+    "database": "",
+    "username": "",
+    "password": "",
+    "sslmode": "",
+    "integer_version": false,
+    "file_template": null,
+    "datetime_format": null,
+    "migration_dir": ""
+}

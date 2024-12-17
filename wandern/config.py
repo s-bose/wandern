@@ -21,3 +21,5 @@ class Config:
     # various formats
     file_template: str | None = None
     datetime_format: str | None = None
+
+    migration_dir: str | None = None

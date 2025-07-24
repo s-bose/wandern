@@ -6,6 +6,7 @@ Timestamp: {timestamp}
 Revision ID: {revision_id}
 Revises: {revises}
 Description: {description}
+Tags: {tags}
 */
 
 -- UP
@@ -15,4 +16,4 @@ Description: {description}
 """
 
 MIGRATION_DEFAULT_TABLE_NAME = "wandern_migrations"
-DEFAULT_FILE_TEMPLATE = "{version}_{description}_{timestamp}.sql"
+TEMPLATE_DEFAULT_FILENAME = "{version}_{slug}_{message}"

@@ -59,12 +59,12 @@ def init(
 
 @app.command()
 def generate(
-    # message: Annotated[
-    #     str,
-    #     typer.Option(
-    #         help="A brief description of the migration",
-    #     ),
-    # ]
+    message: Annotated[
+        str,
+        typer.Option(
+            help="A brief description of the migration",
+        ),
+    ],
 ):
     config_dir = os.path.abspath(".wd.json")
     if not os.access(config_dir, os.F_OK):

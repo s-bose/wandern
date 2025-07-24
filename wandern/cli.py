@@ -4,9 +4,15 @@ import json
 import os
 import typer
 import rich
+from datetime import datetime
 from dataclasses import asdict
+from uuid import uuid4
 
+from wandern.constants import TEMPLATE_DEFAULT_FILENAME
 from wandern.config import Config
+from wandern.utils import generate_migration_filename
+from wandern.templates.manager import generate_template
+from wandern.graph_builder import DAGBuilder
 
 app = typer.Typer(rich_markup_mode="rich")
 
@@ -23,7 +29,7 @@ def init(
     """Initialize wandern for your project by providing a path to the
     migration directory.
 
-    Wandern will create a .wandern.json config file in the current directory,
+    Wandern will create a .wd.json config file in the current directory,
     and the directory, if specified will contain the migration scripts.
     """
 
@@ -42,12 +48,7 @@ def init(
     with open(config_dir, "w") as cfg_file:
         config_obj = Config(
             dialect="postgresql",
-            host="",
-            port="",
-            database="",
-            username="",
-            password="",
-            sslmode="",
+            dsn="",
             migration_dir=directory,
         )
         json.dump(asdict(config_obj), cfg_file, indent=4)
@@ -79,9 +80,62 @@ def generate(
         raise typer.Exit(code=1)
 
     migration_dir = os.path.abspath(config.migration_dir)
-    if config.integer_version:
-        version_num = None  # TODO
+    if not os.access(migration_dir, os.W_OK):
+        rich.print("[red]Migration directory is not writeable[/red]")
+        raise typer.Exit(code=1)
 
+
+    version = uuid4().hex[:8]
+
+    filename = generate_migration_filename(
+        fmt=config.file_format or TEMPLATE_DEFAULT_FILENAME,
+        version=version,
+        message=message,
+    )
+
+    builder = DAGBuilder(migration_dir)
+    revision_id, down_revision_id = builder.iterate()
+
+    if down_revision_id is None:
+        # first migration
+        migration_body = generate_template(
+            filename="migration.sql.j2",
+            kwargs={
+                "timestamp": datetime.now().isoformat(),
+                "version": version,
+                "revises": None,
+                "message": message,
+                "tags": None,
+                "author": None
+            },
+        )
+
+    else:
+        migration_body = generate_template(
+            filename="migration.sql.j2",
+            kwargs={
+                "timestamp": datetime.now().isoformat(),
+                "version": version,
+                "revises": revision_id,
+                "message": message,
+                "tags": None,
+                "author": None
+            },
+        )
+
+
+    with open(os.path.join(migration_dir, filename), "w") as file:
+        file.write(migration_body)
+        rich.print(f"[green]Created migration file {filename}[/green]")
+
+
+@app.command()
+def upgrade():
+    pass
+
+@app.command()
+def downgrade():
+    pass
 
 @app.command()
 def reset():
@@ -97,3 +151,5 @@ def deinit():
     """Removes the migration dir and migration table.
     DOES NOT undo the migrations. Use `reset` for that.
     """
+
+    pass

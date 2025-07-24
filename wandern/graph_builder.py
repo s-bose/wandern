@@ -2,7 +2,12 @@ from typing import Pattern
 import os
 import re
 import networkx as nx
-from matplotlib import pyplot as plt
+
+try:
+    from matplotlib import pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 from wandern.exceptions import DivergentbranchError
 
@@ -17,7 +22,8 @@ class DAGBuilder:
 
         self.graph = nx.DiGraph()
 
-    def iterate(self):
+    def iterate(self) -> tuple[str, str]:
+        revision_id, down_revision_id = None, None
         for file in os.listdir(self.migration_dir):
             if file == ".wd.json":
                 continue
@@ -40,15 +46,25 @@ class DAGBuilder:
 
                 self.graph.add_edge(down_revision_id, revision_id)
 
+        return revision_id, down_revision_id
+
     def show_graph(self):
-        nx.draw(
-            self.graph,
-            nodelist=list(self.graph.nodes),
-            node_size=[len(node) * 500 for node in list(self.graph.nodes)],
-            with_labels=True,
-            pos=nx.spring_layout(self.graph, seed=42),
-        )
-        plt.show()
+        if not HAS_MATPLOTLIB:
+            print("Matplotlib not available. Use 'show_ascii_graph()' instead.")
+            return
+
+        try:
+            from matplotlib import pyplot as plt
+            nx.draw(
+                self.graph,
+                nodelist=list(self.graph.nodes),
+                node_size=[len(node) * 500 for node in list(self.graph.nodes)],
+                with_labels=True,
+                pos=nx.spring_layout(self.graph, seed=42),
+            )
+            plt.show()
+        except ImportError:
+            print("Matplotlib not available. Use 'show_ascii_graph()' instead.")
 
     def get_cycles(self):
         try:

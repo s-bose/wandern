@@ -7,8 +7,6 @@ class Config:
     dialect: Literal["postgresql"]
     dsn: str | None = None
 
-    integer_version: bool = False
-
     # various formats
     file_format: str | None = None
     migration_dir: str | None = None
@@ -22,7 +20,7 @@ class FileTemplateArgs(TypedDict):
     prefix: str | None
 
     # datetime
-    epoch: str | None
+    epoch: float | None
     year: str | None
     month: str | None
     day: str | None

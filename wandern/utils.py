@@ -21,7 +21,7 @@ def slugify(text: str, length: int = 10) -> str:
 
 def generate_migration_filename(
     *,
-    fmt: str = TEMPLATE_DEFAULT_FILENAME,
+    fmt: str,
     version: str,
     message: str | None,
     prefix: str | None = None,
@@ -29,16 +29,16 @@ def generate_migration_filename(
 ):
     current_timestamp = datetime.now(tz=UTC)
     kwargs: FileTemplateArgs = {
-        "version": int(version) if version.isnumeric() else version,
-        "slug": slugify(message),
-        "message": message,
+        "version": str(int(version)) if version.isnumeric() else version,
+        "slug": slugify(message) if message else "",
+        "message": message.replace(" ", "_") if message else None,
         "epoch": current_timestamp.timestamp(),
-        "year": current_timestamp.year,
-        "month": current_timestamp.month,
-        "day": current_timestamp.day,
-        "hour": current_timestamp.hour,
-        "minute": current_timestamp.minute,
-        "second": current_timestamp.second,
+        "year": str(current_timestamp.year),
+        "month": str(current_timestamp.month),
+        "day": str(current_timestamp.day),
+        "hour": str(current_timestamp.hour),
+        "minute": str(current_timestamp.minute),
+        "second": str(current_timestamp.second),
         "author": author,
         "prefix": prefix,
     }
@@ -53,21 +53,6 @@ def generate_migration_filename(
     except KeyError as exc:
         missing_fields = [fname for _, fname, _, _ in parsed_fmt if fname not in kwargs]
         raise ValueError(
-            f"Missing required fields in format string: {', '.join(missing_fields)}"
+            f"Missing required fields in format string: {', '.join([f for f in missing_fields if f])}"
         ) from exc
 
-    # try:
-    #     Path(migration_dir).mkdir(parents=True, exist_ok=True)
-
-    #     with open(Path(migration_dir) / filename, "w", encoding="utf-8") as f:
-    #         file_content = MIGRATION_INIT.format(
-    #             revision_id=revision_id,
-    #             revises=revises,
-    #             description=description,
-    #         )
-
-    #         f.write(file_content)
-
-    # except Exception as exc:
-    #     print(f"error generating migration script: {exc}")
-    #     raise exc

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class Config:
     dialect: Literal["postgresql"]
-    dsn: str | None = None
+    dsn: str
 
     # various formats
     file_format: str | None = None

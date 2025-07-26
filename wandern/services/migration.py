@@ -1,10 +1,8 @@
-from typing import Unpack
-import uuid
 from pathlib import Path
 import os
 import rich
 from datetime import datetime, timezone
-from wandern.config import Config, FileTemplateArgs
+from wandern.config import Config
 from wandern.constants import MIGRATION_DEFAULT_TABLE_NAME, TEMPLATE_DEFAULT_FILENAME
 from wandern.utils import generate_migration_filename
 from wandern.templates.manager import generate_template

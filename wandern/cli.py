@@ -14,49 +14,28 @@ from wandern.templates.manager import generate_template
 from wandern.graph_builder import DAGBuilder
 
 from wandern.databases.postgresql import PostgresMigrationService
+from wandern.commands import WandernCommand
 
 app = typer.Typer(rich_markup_mode="rich")
 
 
 @app.command()
 def init(
+    interactive: Annotated[
+        bool,
+        typer.Option(
+            "--interactive", "-i",
+            help="Run the initialization in interactive mode",
+        ),
+    ] = False,
     directory: Annotated[
-        str,
+        str | None,
         typer.Argument(
             help="Path to the directory to contain the migration scripts",
         ),
-    ] = "migrations",
+    ] = None,
 ):
-    """Initialize wandern for your project by providing a path to the
-    migration directory.
-
-    Wandern will create a .wd.json config file in the current directory,
-    and the directory, if specified will contain the migration scripts.
-    """
-
-    if os.access(directory, os.F_OK) and os.listdir(directory):
-        rich.print(f"[red]Directory {directory} already exists and is not empty[/red]")
-        raise typer.Exit(
-            code=1,
-        )
-
-    migration_dir = os.path.abspath(directory)
-    if not os.path.exists(migration_dir):
-        Path(migration_dir).mkdir(parents=True, exist_ok=True)
-        rich.print(f"[green]Created migration directory {migration_dir}[/green]")
-
-    config_dir = os.path.abspath(".wd.json")
-    with open(config_dir, "w") as cfg_file:
-        config_obj = Config(
-            dialect="postgresql",
-            dsn="",
-            migration_dir=directory,
-        )
-        json.dump(asdict(config_obj), cfg_file, indent=4)
-
-    rich.print(
-        f"[bold][green]Initialized wandern config in {config_dir}[/green][/bold]"
-    )
+    WandernCommand().init(interactive=interactive, directory=directory)
 
 
 @app.command()
@@ -158,7 +137,9 @@ def reset():
     Rolls back all the migrations till now
     """
 
-    pass
+
+
+    db = PostgresMigrationService
 
 
 @app.command()
@@ -260,7 +241,7 @@ def graph(
 
         if summary:
             # Show just the summary statistics
-            rich.print(f"\n[bold]Migration Graph Summary[/bold]")
+            rich.print("\n[bold]Migration Graph Summary[/bold]")
             rich.print(f"Migration directory: {migration_dir}")
             rich.print(f"Total migrations: {len(builder.graph.nodes)}")
             rich.print(f"Migration connections: {len(builder.graph.edges)}")
@@ -279,7 +260,7 @@ def graph(
                 rich.print(f"[yellow]⚠️  Isolated migrations: {isolated}[/yellow]")
         else:
             # Show the full ASCII graph
-            rich.print(f"\n[bold]Migration Dependency Graph[/bold]")
+            rich.print("\n[bold]Migration Dependency Graph[/bold]")
             rich.print(f"Directory: {migration_dir}")
             builder.show_ascii_graph()
 

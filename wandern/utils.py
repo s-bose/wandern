@@ -1,13 +1,8 @@
-from typing import Unpack
 from string import Formatter
-from pathlib import Path
 from datetime import datetime, UTC
 import hashlib
 import base64
-import uuid
-
-from wandern.constants import MIGRATION_INIT, TEMPLATE_DEFAULT_FILENAME
-from wandern.config import FileTemplateArgs, Config
+from wandern.config import FileTemplateArgs
 
 
 def slugify(text: str, length: int = 10) -> str:

@@ -1,12 +1,9 @@
 from typing import Unpack
 import uuid
 from pathlib import Path
-import asyncpg
 import os
 import rich
 from datetime import datetime, timezone
-from asyncpg import Connection
-from asyncpg.exceptions import UndefinedTableError
 from wandern.config import Config, FileTemplateArgs
 from wandern.constants import MIGRATION_DEFAULT_TABLE_NAME, TEMPLATE_DEFAULT_FILENAME
 from wandern.utils import generate_migration_filename

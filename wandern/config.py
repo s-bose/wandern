@@ -1,5 +1,5 @@
 from typing import Literal, TypedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -10,6 +10,7 @@ class Config:
     # various formats
     file_format: str | None = None
     migration_dir: str | None = None
+    migration_table: str = field(default="wd_migrations")
 
 
 class FileTemplateArgs(TypedDict):

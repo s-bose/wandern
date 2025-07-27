@@ -1,12 +1,10 @@
 import pytest
 import networkx as nx
-from wandern.graph_builder import DAGBuilder
+from wandern.graph_builder import MigrationGraph
 from wandern.exceptions import DivergentbranchError
 
 
 def test_divergent_branch():
-    builder = DAGBuilder(migration_dir="abc")
-
     dg = nx.DiGraph()
 
     dg.add_edge("a", "b")
@@ -14,28 +12,37 @@ def test_divergent_branch():
     dg.add_edge("c", "d")
     dg.add_edge("c", "e")
 
-    builder.graph = dg
-    with pytest.raises(DivergentbranchError):
-        builder.is_graph_diverging()
+    migration_graph = MigrationGraph(dg)
+    with pytest.raises(DivergentbranchError) as excinfo:
+        migration_graph.get_last_migration()
+
+    # Access the exception instance and test its fields
+    exception = excinfo.value
+    assert exception.from_ == "c"
+    assert exception.to_ == ["d", "e"]
 
 
 def test_loops_in_branch():
-    builder = DAGBuilder(migration_dir="abc")
 
     dg = nx.DiGraph()
 
     dg.add_edge("a", "b")
     dg.add_edge("b", "c")
     dg.add_edge("c", "d")
-    dg.add_edge("d", "a")
+    dg.add_edge("d", "b")
 
-    builder.graph = dg
+    graph = MigrationGraph(dg)
 
-    assert builder.get_cycles()
+    cycle = graph.get_cycles()
+    assert cycle
+    assert cycle == [
+        ("b", "c", "forward"),
+        ("c", "d", "forward"),
+        ("d", "b", "forward"),
+    ]
 
 
 def test_no_loops():
-    builder = DAGBuilder(migration_dir="abc")
 
     dg = nx.DiGraph()
 
@@ -43,7 +50,17 @@ def test_no_loops():
     dg.add_edge("b", "c")
     dg.add_edge("c", "d")
 
-    builder.graph = dg
+    graph = MigrationGraph(dg)
 
-    assert not builder.get_cycles()
-    assert not builder.is_graph_diverging()
+    assert not graph.get_cycles()
+
+
+def test_migration_files():
+    migration_dir = "tests/migrations"
+    graph = MigrationGraph.build(migration_dir)
+    assert graph
+    last_migration = graph.get_last_migration()
+    assert last_migration
+
+    assert last_migration[0] == "0004"
+    assert last_migration[1] == "0005"

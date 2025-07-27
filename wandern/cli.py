@@ -24,7 +24,8 @@ def init(
     interactive: Annotated[
         bool,
         typer.Option(
-            "--interactive", "-i",
+            "--interactive",
+            "-i",
             help="Run the initialization in interactive mode",
         ),
     ] = False,
@@ -64,7 +65,6 @@ def generate(
         rich.print("[red]Migration directory is not writeable[/red]")
         raise typer.Exit(code=1)
 
-
     version = uuid4().hex[:8]
 
     filename = generate_migration_filename(
@@ -74,7 +74,7 @@ def generate(
     )
 
     builder = DAGBuilder(migration_dir)
-    revision_id, down_revision_id = builder.iterate()
+    revision_id, down_revision_id = builder.build()
     print(f"{revision_id=}: {down_revision_id=}")
 
     if down_revision_id is None:
@@ -87,7 +87,7 @@ def generate(
                 "revises": None,
                 "message": message,
                 "tags": None,
-                "author": None
+                "author": None,
             },
         )
 
@@ -100,7 +100,7 @@ def generate(
                 "revises": revision_id,
                 "message": message,
                 "tags": None,
-                "author": None
+                "author": None,
             },
         )
 
@@ -111,33 +111,21 @@ def generate(
         rich.print(f"[green]Created migration file {filename}[/green]")
 
 
-    with open(os.path.join(migration_dir, ".wd.json"), "w") as file:
-        json.dump(
-            {
-                **asdict(config),
-                "version": version,
-                "message": message,
-            },
-            file,
-            indent=4
-        )
-
-
 @app.command()
 def upgrade():
     pass
 
+
 @app.command()
 def downgrade():
     pass
+
 
 @app.command()
 def reset():
     """Reset all migrations.
     Rolls back all the migrations till now
     """
-
-
 
     db = PostgresMigrationService
 
@@ -161,8 +149,10 @@ def ping():
     if not result:
         rich.print("[red]No migrations found in the database[/red]")
         raise typer.Exit(code=1)
-    rich.print(f"Current head: [green]{result['id']}[/green] - revises [yellow]{result['down_revision']}[/yellow]"
-               f" Created at: {result['created_at']}")
+    rich.print(
+        f"Current head: [green]{result['id']}[/green] - revises [yellow]{result['down_revision']}[/yellow]"
+        f" Created at: {result['created_at']}"
+    )
 
 
 @app.command()
@@ -179,16 +169,12 @@ def graph(
     directory: Annotated[
         Optional[str],
         typer.Option(
-            "--directory", "-d",
-            help="Override migration directory from config"
+            "--directory", "-d", help="Override migration directory from config"
         ),
     ] = None,
     summary: Annotated[
         bool,
-        typer.Option(
-            "--summary", "-s",
-            help="Show graph statistics and health check"
-        ),
+        typer.Option("--summary", "-s", help="Show graph statistics and health check"),
     ] = False,
 ):
     """Display a visual diagram of the migration dependency graph.
@@ -201,13 +187,15 @@ def graph(
     config_path = os.path.abspath(".wd.json")
     if not os.access(config_path, os.F_OK):
         rich.print("[red]No wandern config found in the current directory[/red]")
-        rich.print("Run [bold]wandern init[/bold] to initialize wandern for this project.")
+        rich.print(
+            "Run [bold]wandern init[/bold] to initialize wandern for this project."
+        )
         raise typer.Exit(code=1)
 
     with open(config_path) as file:
         config_data = json.load(file)
         # Filter out unknown fields that might exist in the config file
-        valid_fields = {'dialect', 'dsn', 'file_format', 'migration_dir'}
+        valid_fields = {"dialect", "dsn", "file_format", "migration_dir"}
         filtered_config = {k: v for k, v in config_data.items() if k in valid_fields}
         config = Config(**filtered_config)
 
@@ -215,7 +203,9 @@ def graph(
     migration_dir = directory or config.migration_dir
     if not migration_dir:
         rich.print("[red]No migration directory specified[/red]")
-        rich.print("Either specify --directory or ensure migration_dir is set in .wd.json")
+        rich.print(
+            "Either specify --directory or ensure migration_dir is set in .wd.json"
+        )
         raise typer.Exit(code=1)
 
     migration_dir = os.path.abspath(migration_dir)
@@ -228,7 +218,7 @@ def graph(
         raise typer.Exit(code=1)
 
     # Check if directory has migration files
-    migration_files = [f for f in os.listdir(migration_dir) if f.endswith('.sql')]
+    migration_files = [f for f in os.listdir(migration_dir) if f.endswith(".sql")]
     if not migration_files:
         rich.print(f"[yellow]No migration files found in {migration_dir}[/yellow]")
         rich.print("Use [bold]wandern generate[/bold] to create your first migration.")
@@ -255,6 +245,7 @@ def graph(
 
             # Show isolated nodes (if any)
             import networkx as nx
+
             isolated = list(nx.isolates(builder.graph))
             if isolated:
                 rich.print(f"[yellow]⚠️  Isolated migrations: {isolated}[/yellow]")

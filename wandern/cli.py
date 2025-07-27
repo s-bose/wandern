@@ -14,7 +14,7 @@ from wandern.templates.manager import generate_template
 from wandern.graph_builder import DAGBuilder
 
 from wandern.databases.postgresql import PostgresMigrationService
-from wandern.commands import WandernCommand
+from wandern import commands
 
 app = typer.Typer(rich_markup_mode="rich")
 
@@ -35,17 +35,17 @@ def init(
         ),
     ] = None,
 ):
-    WandernCommand().init(interactive=interactive, directory=directory)
+    commands.init(interactive=interactive, directory=directory)
 
 
 @app.command()
 def generate(
     message: Annotated[
-        str,
+        str | None,
         typer.Option(
             help="A brief description of the migration",
         ),
-    ],
+    ] = None,
 ):
     config_dir = os.path.abspath(".wd.json")
     if not os.access(config_dir, os.F_OK):

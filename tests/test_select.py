@@ -1,4 +1,3 @@
-import pytest
 from wandern.service import MigrationService
 from wandern.config import Config
 

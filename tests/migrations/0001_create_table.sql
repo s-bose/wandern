@@ -5,7 +5,9 @@ Timestamp: 2024-11-19 00:55:16
 
 Revision ID: 0001
 Revises: None
-Description: create table
+Message: create table
+Tags: Foo, Bar
+Author: s-bose
 */
 
 -- UP

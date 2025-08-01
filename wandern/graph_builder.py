@@ -1,24 +1,53 @@
 import os
 from pathlib import Path
+from datetime import datetime
+from dataclasses import dataclass
 import networkx as nx
-from wandern.exceptions import DivergentbranchError, InvalidMigrationFile, CycleDetected
+
+from wandern.exceptions import (
+    DivergentbranchError,
+    InvalidMigrationFile,
+    CycleDetected,
+    GraphErrror,
+)
 
 from wandern.constants import REGEX_REVISION_ID
 
 
+# @dataclass
+# class MigrationNode:
+#     version: str
+#     timestamp: datetime
+#     revises: str | None = None
+#     message: str | None = None
+#     author: str | None = None
+#     tags: list[str] | None = None
+
+#     def __post_init__(self):
+#         if self.revises == "None":
+#             self.revises = None
+#         if isinstance(self.timestamp, str):
+#             self.timestamp = datetime.fromisoformat(self.timestamp)
+
+#         if self.tags and isinstance(self.tags, str):
+#             self.tags = [t.strip() for t in self.tags.split(",")]
+
+#     def __hash__(self) -> int:
+#         return hash(self.version)
+
+
 class MigrationGraph:
-    def __init__(self, graph: nx.DiGraph):
-        self._graph = graph
+    def __init__(self, graph: nx.DiGraph | None = None):
+        self._graph = None
+        if graph:
+            self._graph = graph
 
     @classmethod
     def build(cls, migration_dir: str):
-        graph = nx.DiGraph()
+        graph: nx.DiGraph = nx.DiGraph()
 
-        revision_id, down_revision_id = None, None
-        for index, file in enumerate(
-            sorted(Path(migration_dir).iterdir(), key=os.path.getmtime)
-        ):
-
+        # revision_id, down_revision_id = None, None
+        for file in Path(migration_dir).iterdir():
             if not os.path.isfile(file) or file.suffix != ".sql":
                 raise InvalidMigrationFile("Migration file must be a sql file")
 
@@ -29,10 +58,13 @@ class MigrationGraph:
                 if not match:
                     raise InvalidMigrationFile("Missing revision id")
 
-                revision_id = match.group("revision_id")
-                down_revision_id = match.group("down_revision_id")
+                match_fields = match.groups()
+                revision_id, down_revision_id = match_fields
 
-                graph.add_edge(down_revision_id, revision_id, index=index)
+                if down_revision_id == "None":
+                    continue
+
+                graph.add_edge(down_revision_id, revision_id)
 
         return cls(graph=graph)
 
@@ -40,88 +72,26 @@ class MigrationGraph:
         if cycle := self.get_cycles():
             raise CycleDetected(cycle)
 
-        for u, v in self._graph.edges():
-
-            out_edges = self._graph.out_edges(v)
-            print(f"{u=} {v=} {out_edges=}")
+        leaf_node = None
+        if not self._graph:
+            return None
+        for node in self._graph.nodes():
+            out_edges = self._graph.out_edges(node)
 
             if len(out_edges) > 1:
-                raise DivergentbranchError(from_=v, to_=[node[1] for node in out_edges])
+                to_nodes = [n[1] for n in out_edges]
+                raise DivergentbranchError(
+                    f"Divergent branch detected from {node} to ({', '.join(to_nodes)})"
+                )
 
             if len(out_edges) == 0:
-                return u, v
+                leaf_node = node
 
-        return None
+        return leaf_node
 
     def get_cycles(self):
         try:
             cycle = nx.find_cycle(self._graph, orientation="original")
-            print(f"{cycle=}")
             return cycle
         except nx.NetworkXNoCycle:
             return None
-
-    # def show_ascii_graph(self):
-    #     """Display the migration graph as ASCII art in the terminal."""
-    #     if not self.graph.nodes:
-    #         print("No migrations found in the graph.")
-    #         return
-
-    #     # Find the root node (node with no incoming edges)
-    #     root_nodes = [
-    #         node for node in self.graph.nodes if self.graph.in_degree(node) == 0
-    #     ]
-
-    #     if not root_nodes:
-    #         print("Warning: No root migration found (circular dependency detected)")
-    #         root_nodes = list(self.graph.nodes)[:1]
-
-    #     print("\nMigration Graph (ASCII):")
-    #     print("=" * 50)
-
-    #     # Track visited nodes to avoid infinite loops
-    #     visited = set()
-
-    #     def print_tree(node, prefix="", is_last=True, level=0):
-    #         if node in visited:
-    #             return
-    #         visited.add(node)
-
-    #         # Create the tree structure
-    #         connector = "└── " if is_last else "├── "
-    #         print(f"{prefix}{connector}{node}")
-
-    #         # Get children (nodes this migration leads to)
-    #         children = list(self.graph.successors(node))
-
-    #         if children:
-    #             # Sort children for consistent display
-    #             children.sort()
-
-    #             for i, child in enumerate(children):
-    #                 is_child_last = i == len(children) - 1
-    #                 extension = "    " if is_last else "│   "
-    #                 print_tree(child, prefix + extension, is_child_last, level + 1)
-
-    #     # Handle multiple root nodes
-    #     for i, root in enumerate(sorted(root_nodes)):
-    #         if i > 0:
-    #             print()  # Add spacing between multiple trees
-    #         print_tree(root, "", True)
-
-    #     # Show additional graph statistics
-    #     print("\nGraph Statistics:")
-    #     print(f"Total migrations: {len(self.graph.nodes)}")
-    #     print(f"Migration connections: {len(self.graph.edges)}")
-
-    #     # Check for cycles
-    #     cycles = self.get_cycles()
-    #     if cycles:
-    #         print(f"⚠️  Cycles detected: {cycles}")
-    #     else:
-    #         print("✅ No cycles detected")
-
-    #     # Show isolated nodes (if any)
-    #     isolated = list(nx.isolates(self.graph))
-    #     if isolated:
-    #         print(f"⚠️  Isolated migrations: {isolated}")

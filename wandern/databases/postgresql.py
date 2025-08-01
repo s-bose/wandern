@@ -1,4 +1,3 @@
-
 import psycopg
 from psycopg.sql import SQL, Identifier
 from psycopg.rows import dict_row, DictRow
@@ -6,8 +5,8 @@ from psycopg.connection import Connection
 from wandern.config import Config
 
 
-class ConnectError(Exception):
-    ...
+class ConnectError(Exception): ...
+
 
 class PostgresMigrationService:
     def __init__(self, config: Config):
@@ -15,7 +14,9 @@ class PostgresMigrationService:
 
     def connect(self) -> Connection[DictRow]:
         try:
-            return psycopg.connect(self.config.dsn, autocommit=True, row_factory=dict_row) # type: ignore
+            return psycopg.connect(
+                self.config.dsn, autocommit=True, row_factory=dict_row
+            )  # type: ignore
         except Exception as exc:
             print("Failed to connect to the database:", exc)
             raise exc
@@ -29,7 +30,6 @@ class PostgresMigrationService:
             created_at TIMESTAMP DEFAULT NOW()
         )
         """).format(table=Identifier(self.config.migration_table))
-
 
         connection = self.connect()
         cursor = connection.cursor()

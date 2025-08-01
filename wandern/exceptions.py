@@ -3,12 +3,14 @@ class WandernException(Exception):
 
 
 class DivergentbranchError(WandernException):
-    def __init__(self, from_: str, to_: list[str]) -> None:
-        self.from_ = from_
-        self.to_ = to_
+    pass
 
 
 class InvalidMigrationFile(WandernException):
+    pass
+
+
+class GraphErrror(WandernException):
     pass
 
 

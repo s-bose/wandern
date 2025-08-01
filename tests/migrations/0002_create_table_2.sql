@@ -5,7 +5,7 @@ Timestamp: 2024-11-19 00:55:16
 
 Revision ID: 0002
 Revises: 0001
-Description: create table 2
+Message: create table 2
 */
 
 -- UP

@@ -13,17 +13,11 @@ def test_divergent_branch():
     dg.add_edge("c", "e")
 
     migration_graph = MigrationGraph(dg)
-    with pytest.raises(DivergentbranchError) as excinfo:
+    with pytest.raises(DivergentbranchError):
         migration_graph.get_last_migration()
-
-    # Access the exception instance and test its fields
-    exception = excinfo.value
-    assert exception.from_ == "c"
-    assert exception.to_ == ["d", "e"]
 
 
 def test_loops_in_branch():
-
     dg = nx.DiGraph()
 
     dg.add_edge("a", "b")
@@ -43,7 +37,6 @@ def test_loops_in_branch():
 
 
 def test_no_loops():
-
     dg = nx.DiGraph()
 
     dg.add_edge("a", "b")
@@ -62,5 +55,4 @@ def test_migration_files():
     last_migration = graph.get_last_migration()
     assert last_migration
 
-    assert last_migration[0] == "0004"
-    assert last_migration[1] == "0005"
+    assert last_migration == "0005"

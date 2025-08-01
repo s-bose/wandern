@@ -5,7 +5,7 @@ Timestamp: 2024-11-19 00:55:16
 
 Revision ID: 0003
 Revises: 0002
-Description: create table 3
+Message: create table 3
 */
 
 -- UP

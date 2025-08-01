@@ -1,11 +1,9 @@
 from typing import Annotated, Optional
-from pathlib import Path
 import json
 import os
 import typer
 import rich
 from datetime import datetime
-from dataclasses import asdict
 from uuid import uuid4
 from wandern.constants import TEMPLATE_DEFAULT_FILENAME
 from wandern.config import Config

@@ -3,9 +3,12 @@ import typer
 import rich
 import json
 import questionary
+import uuid
 from dataclasses import asdict
 from wandern.config import Config
-from wandern.databases.postgresql import PostgresMigrationService
+from wandern.utils import generate_migration_filename
+from wandern.constants import TEMPLATE_DEFAULT_FILENAME
+from wandern.graph_builder import MigrationGraph
 
 
 def init(interactive: bool = False, directory: str | None = None):
@@ -62,9 +65,38 @@ def init(interactive: bool = False, directory: str | None = None):
         )
 
 
+def validate():
+    """validates the migration dependency graph"""
+    config_dir = os.path.abspath(".wd.json")
+
+    config = load_config(config_dir)
+    if not config.migration_dir:
+        rich.print("[red]Migration directory does not exist[/red]")
+        raise typer.Exit(1)
+
+    graph_builder = DAGBuilder(config.migration_dir)
+    graph_builder.build()
+
+
 def generate(message: str | None = None):
     config_dir = os.path.abspath(".wd.json")
     config = load_config(config_dir)
+
+    if not config.migration_dir:
+        rich.print("[red]No migration directory specified in the config[/red]")
+        raise typer.Exit(code=1)
+    migration_dir = os.path.abspath(config.migration_dir)
+    if not os.access(migration_dir, os.W_OK):
+        rich.print("[red]Migration directory is not writeable[/red]")
+        raise typer.Exit(1)
+
+    version = uuid.uuid4().hex[:8]
+
+    filename = generate_migration_filename(
+        fmt=config.file_format or TEMPLATE_DEFAULT_FILENAME,
+        version=version,
+        message=message,
+    )
 
 
 def save_config(config: Config, path: str):

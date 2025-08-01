@@ -1,7 +1,7 @@
 from typing import Pattern
 import re
 
-MIGRATION_DEFAULT_TABLE_NAME = "wandern_migrations"
+MIGRATION_DEFAULT_TABLE_NAME = "wd_migrations"
 TEMPLATE_DEFAULT_FILENAME = "{version}_{slug}_{message}"
 
 REGEX_REVISION_ID: Pattern = re.compile(

@@ -50,4 +50,3 @@ def generate_migration_filename(
         raise ValueError(
             f"Missing required fields in format string: {', '.join([f for f in missing_fields if f])}"
         ) from exc
-

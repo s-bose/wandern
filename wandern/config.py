@@ -1,6 +1,8 @@
 from typing import Literal, TypedDict
 from dataclasses import dataclass, field
 
+from wandern.constants import DEFAULT_FILE_FORMAT
+
 
 @dataclass
 class Config:
@@ -8,7 +10,7 @@ class Config:
     dsn: str
 
     # various formats
-    file_format: str | None = None
+    file_format: str | None = field(default=DEFAULT_FILE_FORMAT)
     migration_dir: str | None = None
     migration_table: str = field(default="wd_migrations")
 

@@ -15,5 +15,8 @@ class GraphErrror(WandernException):
 
 
 class CycleDetected(WandernException):
-    def __init__(self, cycle: list) -> None:
-        self.cycle = cycle
+    pass
+
+
+class ConnectError(BaseException):
+    pass

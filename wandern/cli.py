@@ -8,7 +8,7 @@ from uuid import uuid4
 from wandern.constants import TEMPLATE_DEFAULT_FILENAME
 from wandern.config import Config
 from wandern.utils import generate_migration_filename
-from wandern.templates.manager import generate_template
+from wandern.templates import generate_template
 from wandern.graph_builder import DAGBuilder
 
 from wandern.databases.postgresql import PostgresMigrationService

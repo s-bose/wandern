@@ -11,5 +11,6 @@ Author: s-bose
 */
 
 -- UP
-
+CREATE TABLE users;
 -- DOWN
+DROP TABLE users;

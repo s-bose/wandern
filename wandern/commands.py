@@ -9,6 +9,7 @@ from wandern.config import Config
 from wandern.utils import generate_migration_filename
 from wandern.constants import TEMPLATE_DEFAULT_FILENAME
 from wandern.graph_builder import MigrationGraph
+from wandern.exceptions import CycleDetected, DivergentbranchError
 
 
 def init(interactive: bool = False, directory: str | None = None):
@@ -67,15 +68,17 @@ def init(interactive: bool = False, directory: str | None = None):
 
 def validate():
     """validates the migration dependency graph"""
-    config_dir = os.path.abspath(".wd.json")
+    # config_dir = os.path.abspath(".wd.json")
 
-    config = load_config(config_dir)
-    if not config.migration_dir:
-        rich.print("[red]Migration directory does not exist[/red]")
-        raise typer.Exit(1)
+    # config = load_config(config_dir)
+    # if not config.migration_dir:
+    #     rich.print("[red]Migration directory does not exist[/red]")
+    #     raise typer.Exit(1)
 
-    graph_builder = DAGBuilder(config.migration_dir)
-    graph_builder.build()
+    # migration_graph = MigrationGraph.build(config.migration_dir)
+    # try:
+    #     last_revision = migration_graph.get_last_migration()
+    # except CycleDetected as exc:
 
 
 def generate(message: str | None = None):

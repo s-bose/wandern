@@ -1,39 +1,14 @@
 import os
 from pathlib import Path
-from datetime import datetime
-from dataclasses import dataclass
 import networkx as nx
 
 from wandern.exceptions import (
     DivergentbranchError,
     InvalidMigrationFile,
     CycleDetected,
-    GraphErrror,
 )
 
-from wandern.constants import REGEX_REVISION_ID
-
-
-# @dataclass
-# class MigrationNode:
-#     version: str
-#     timestamp: datetime
-#     revises: str | None = None
-#     message: str | None = None
-#     author: str | None = None
-#     tags: list[str] | None = None
-
-#     def __post_init__(self):
-#         if self.revises == "None":
-#             self.revises = None
-#         if isinstance(self.timestamp, str):
-#             self.timestamp = datetime.fromisoformat(self.timestamp)
-
-#         if self.tags and isinstance(self.tags, str):
-#             self.tags = [t.strip() for t in self.tags.split(",")]
-
-#     def __hash__(self) -> int:
-#         return hash(self.version)
+from wandern.file import parse_sql_file
 
 
 class MigrationGraph:
@@ -46,31 +21,33 @@ class MigrationGraph:
     def build(cls, migration_dir: str):
         graph: nx.DiGraph = nx.DiGraph()
 
-        # revision_id, down_revision_id = None, None
         for file in Path(migration_dir).iterdir():
             if not os.path.isfile(file) or file.suffix != ".sql":
                 raise InvalidMigrationFile("Migration file must be a sql file")
 
-            with open(file, "r") as f:
-                content = f.read()
-
-                match = REGEX_REVISION_ID.search(content)
-                if not match:
-                    raise InvalidMigrationFile("Missing revision id")
-
-                match_fields = match.groups()
-                revision_id, down_revision_id = match_fields
-
-                if down_revision_id == "None":
+            try:
+                migration_sql = parse_sql_file(file_path=file)
+            except ValueError as exc:
+                raise InvalidMigrationFile(
+                    f"Error parsing migration file: {file.name}"
+                ) from exc
+            else:
+                if migration_sql["down_revision_id"] is None:
                     continue
 
-                graph.add_edge(down_revision_id, revision_id)
+                graph.add_edge(
+                    migration_sql["down_revision_id"], migration_sql["revision_id"]
+                )
 
         return cls(graph=graph)
 
     def get_last_migration(self):
         if cycle := self.get_cycles():
-            raise CycleDetected(cycle)
+
+            cycle_str = "\n".join(
+                [f"{c[0]} {'->' if c[2] == 'forward' else '<-'} {c[1]}" for c in cycle]
+            )
+            raise CycleDetected(cycle_str)
 
         leaf_node = None
         if not self._graph:

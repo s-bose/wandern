@@ -6,9 +6,10 @@ from psycopg.connection import Connection
 from wandern.config import Config
 from wandern.exceptions import ConnectError
 from wandern.databases.base import DatabaseMigration
+from wandern.types import Revision
 
 
-class PostgresMigrationService(DatabaseMigration):
+class PostgresMigration(DatabaseMigration):
     def __init__(self, config: Config):
         self.config = config
 
@@ -58,24 +59,39 @@ class PostgresMigrationService(DatabaseMigration):
             result = connection.execute(query)
             return result.fetchone()
 
-    def migrate_up(self, revision: str):
-        pass
+    def migrate_up(self, revision: Revision):
+        with self.connect() as connection:
+            with connection.transaction():  # BEGIN
+                connection.execute(revision["up_sql"])
 
-    def migrate_down(self, revision: str) -> None:
-        pass
+                update_migration_sql = self.compose_update_migration_sql()
+                connection.execute(
+                    update_migration_sql,
+                    params={
+                        "revision_id": revision["revision_id"],
+                        "down_revision_id": revision["down_revision_id"],
+                        "timestamp": datetime.now(),
+                    },
+                )
 
-    def update_migration(
-        self, revision_id: str, down_revision_id: str, timestamp: datetime
-    ):
-        query = SQL(
+    def migrate_down(self, revision: Revision) -> None:
+        with self.connect() as connection:
+            with connection.transaction():  # BEGIN
+                connection.execute(revision["down_sql"])
+
+                update_migration_sql = self.compose_update_migration_sql()
+                connection.execute(
+                    update_migration_sql,
+                    params={
+                        "revision_id": revision["revision_id"],
+                        "down_revision_id": revision["down_revision_id"],
+                        "timestamp": datetime.now(),
+                    },
+                )
+
+    def compose_update_migration_sql(self):
+        return SQL(
             """UPDATE public.{table}
-            SET id = %s, down_revision = %s, created_at = %s
+            SET id = %(revision_id)s, down_revision = %(down_revision_id)s, created_at = %(timestamp)s
             """
         ).format(table=Identifier(self.config.migration_table))
-
-        with self.connect() as connection:
-            with connection.transaction():
-                result = connection.execute(
-                    query, (revision_id, down_revision_id, timestamp)
-                )
-                return result.rowcount

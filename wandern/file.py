@@ -1,14 +1,7 @@
-from typing import TypedDict
 from pathlib import Path
 import re
 from wandern.constants import REGEX_REVISION_ID
-
-
-class MigrationSql(TypedDict):
-    revision_id: str
-    down_revision_id: str | None
-    up_sql: str
-    down_sql: str
+from wandern.types import Revision
 
 
 def parse_sql_file(file_path: str | Path):
@@ -30,7 +23,7 @@ def parse_sql_file(file_path: str | Path):
         )
         up_sql, down_sql = sections[2].strip(), sections[4].strip()
 
-        return MigrationSql(
+        return Revision(
             revision_id=revision_id,
             down_revision_id=(None if down_revision_id == "None" else down_revision_id),
             up_sql=up_sql.strip(),

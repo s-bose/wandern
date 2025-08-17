@@ -8,10 +8,10 @@ from wandern.constants import DEFAULT_FILE_FORMAT
 class Config:
     dialect: Literal["postgresql"]
     dsn: str
+    migration_dir: str
 
     # various formats
     file_format: str | None = field(default=DEFAULT_FILE_FORMAT)
-    migration_dir: str | None = None
     migration_table: str = field(default="wd_migrations")
 
 

@@ -1,8 +1,11 @@
 from string import Formatter
 from datetime import datetime, UTC
+from pathlib import Path
 import hashlib
 import base64
 from wandern.config import FileTemplateArgs
+from wandern.constants import REGEX_MIGRATION_PARSER
+from wandern.models import Revision
 
 
 def slugify(text: str, length: int = 10) -> str:
@@ -50,3 +53,37 @@ def generate_migration_filename(
         raise ValueError(
             f"Missing required fields in format string: {', '.join([f for f in missing_fields if f])}"
         ) from exc
+
+
+def parse_sql_file_content(file_path: str | Path):
+    with open(file_path, encoding="utf-8") as file:
+        content = file.read()
+
+        match = REGEX_MIGRATION_PARSER.search(content)
+
+        if not match:
+            raise ValueError("Invalid migration file format")
+
+        group: dict[str, str] = match.groupdict()
+        revision_id = group["revision_id"].strip()
+        down_revision_id: str | None = group["revises"].strip()
+
+        message = group["message"].strip()
+        author = group["author"].strip() if group["author"] else None
+        tags = group["tags"].strip().split(",") if group["tags"] else None
+        up_sql = group["up_sql"].strip()
+        down_sql = group["down_sql"].strip()
+
+        return Revision(
+            revision_id=revision_id,
+            down_revision_id=(
+                None
+                if not down_revision_id or down_revision_id.lower() == "none"
+                else down_revision_id
+            ),
+            message=message,
+            author=author,
+            tags=tags,
+            up_sql=up_sql,
+            down_sql=down_sql,
+        )

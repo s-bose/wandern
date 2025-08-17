@@ -32,12 +32,14 @@ class MigrationGraph:
                     f"Error parsing migration file: {file.name}"
                 ) from exc
             else:
-                if migration_sql["down_revision_id"] is None:
-                    continue
+                graph.add_node(migration_sql["revision_id"], **migration_sql)
 
-                graph.add_edge(
-                    migration_sql["down_revision_id"], migration_sql["revision_id"]
-                )
+        for node in graph.nodes():
+            node_data = graph.nodes[node]
+            if node_data["down_revision_id"] is None:
+                continue
+
+            graph.add_edge(node_data["down_revision_id"], node_data["revision_id"])
 
         return cls(graph=graph)
 

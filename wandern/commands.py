@@ -7,7 +7,7 @@ import uuid
 from dataclasses import asdict
 from wandern.config import Config
 from wandern.utils import generate_migration_filename
-from wandern.constants import TEMPLATE_DEFAULT_FILENAME
+from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.graph_builder import MigrationGraph
 from wandern.exceptions import CycleDetected, DivergentbranchError
 
@@ -96,7 +96,7 @@ def generate(message: str | None = None):
     version = uuid.uuid4().hex[:8]
 
     filename = generate_migration_filename(
-        fmt=config.file_format or TEMPLATE_DEFAULT_FILENAME,
+        fmt=config.file_format or DEFAULT_FILE_FORMAT,
         version=version,
         message=message,
     )

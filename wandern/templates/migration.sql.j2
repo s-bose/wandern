@@ -15,4 +15,12 @@ Author: {{ author }}
 
 -- UP
 
+{% if up_sql %}
+{{ up_sql }}
+{% endif %}
+
 -- DOWN
+
+{% if down_sql %}
+{{ down_sql }}
+{% endif %}

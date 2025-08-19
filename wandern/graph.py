@@ -8,12 +8,13 @@ from wandern.exceptions import (
     CycleDetected,
 )
 
+from wandern.models import Revision
 from wandern.utils import parse_sql_file_content
 
 
 class MigrationGraph:
     def __init__(self, graph: nx.DiGraph | None = None):
-        self._graph = None
+        self._graph: nx.DiGraph
         if graph:
             self._graph = graph
 
@@ -26,36 +27,51 @@ class MigrationGraph:
                 raise InvalidMigrationFile("Migration file must be a sql file")
 
             try:
-                migration_sql = parse_sql_file_content(file_path=file)
+                revision = parse_sql_file_content(file_path=file)
             except ValueError as exc:
                 raise InvalidMigrationFile(
                     f"Error parsing migration file: {file.name}"
                 ) from exc
             else:
-                graph.add_node(migration_sql["revision_id"], **migration_sql)
+                graph.add_node(revision.revision_id, **revision.model_dump())
 
         for node in graph.nodes():
-            node_data = graph.nodes[node]
-            if node_data["down_revision_id"] is None:
+            node_data = Revision(**graph.nodes[node])
+            if node_data.down_revision_id is None:
                 continue
 
-            graph.add_edge(node_data["down_revision_id"], node_data["revision_id"])
+            graph.add_edge(node_data.down_revision_id, node_data.revision_id)
 
         return cls(graph=graph)
 
     def get_last_migration(self):
-        if cycle := self.get_cycles():
+        MigrationGraph.check_cycles(self._graph)
+        MigrationGraph.check_divergence(self._graph)
 
+        leaf_node = None
+        for node in self._graph.nodes():
+            out_edges = self._graph.out_edges(node)
+            if len(out_edges) == 0:
+                leaf_node = node
+
+        return leaf_node
+
+    @staticmethod
+    def check_cycles(graph: nx.DiGraph):
+        try:
+            cycle = nx.find_cycle(graph, orientation="original")
             cycle_str = "\n".join(
                 [f"{c[0]} {'->' if c[2] == 'forward' else '<-'} {c[1]}" for c in cycle]
             )
-            raise CycleDetected(cycle_str)
 
-        leaf_node = None
-        if not self._graph:
+            raise CycleDetected(cycle_str)
+        except nx.NetworkXNoCycle:
             return None
-        for node in self._graph.nodes():
-            out_edges = self._graph.out_edges(node)
+
+    @staticmethod
+    def check_divergence(graph: nx.DiGraph):
+        for node in graph.nodes():
+            out_edges = graph.out_edges(node)
 
             if len(out_edges) > 1:
                 to_nodes = [n[1] for n in out_edges]
@@ -63,14 +79,42 @@ class MigrationGraph:
                     f"Divergent branch detected from {node} to ({', '.join(to_nodes)})"
                 )
 
-            if len(out_edges) == 0:
-                leaf_node = node
+    @property
+    def first(self) -> str | None:
+        for node in self._graph.nodes():
+            in_edges = self._graph.in_edges(node)
+            if len(in_edges) == 0:
+                return node
+        return None
 
-        return leaf_node
-
-    def get_cycles(self):
-        try:
-            cycle = nx.find_cycle(self._graph, orientation="original")
-            return cycle
-        except nx.NetworkXNoCycle:
+    def iter(self):
+        first_node = self.first
+        if not first_node:
             return None
+
+        yield Revision(**self._graph.nodes[first_node])
+
+        current_node = first_node
+        while current_node:
+            current_node = next(self._graph.successors(current_node), None)
+            if current_node:
+                yield Revision(**self._graph.nodes[current_node])
+
+    def iter_from(self, start: str, steps: int | None = None):
+        if start not in self._graph.nodes:
+            raise ValueError(f"Revision: {start} does not exist in the graph")
+
+        current_node = start
+        yield Revision(**self._graph.nodes[current_node])
+
+        count = 0
+        while current_node and (steps is None or count < steps):
+            current_node = next(self._graph.successors(current_node), None)
+            if current_node:
+                yield Revision(**self._graph.nodes[current_node])
+            count += 1
+
+    def get_node(self, revision_id: str) -> Revision | None:
+        if revision_id not in self._graph.nodes:
+            return None
+        return Revision(**self._graph.nodes[revision_id])

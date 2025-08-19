@@ -1,63 +1,42 @@
 from wandern.config import Config
 from wandern.databases.provider import get_database_impl
+from wandern.databases.base import DatabaseMigration
 from wandern.graph import MigrationGraph
-from wandern.types import Revision
+from wandern.models import Revision
 
 
-def migrate_up(config: Config, steps: int | None = None):
-    database_helper = get_database_impl(config.dialect, config=config)
+class MigrationService:
+    def __init__(self, config: Config):
+        self.config = config
+        self.database = get_database_impl(config.dialect, config=config)
+        self.graph = MigrationGraph.build(config.migration_dir)
 
-    mg = MigrationGraph.build(config.migration_dir)
+    def upgrade(self, steps: int | None = None):
+        head = self.database.get_head_revision()
+        if not head:
+            # first migration
+            for revision in self.graph.iter():
+                self.database.migrate_up(revision)
+        else:
+            for revision in self.graph.iter_from(head["revision_id"], steps=steps):
+                self.database.migrate_up(revision)
 
-    # Apply create table migrations first
-    database_helper.create_table_migration()
+    def downgrade(self, steps: int | None = None):
+        head = self.database.get_head_revision()
+        if not head:
+            # No migration to downgrade
+            return
 
-    head_revision = database_helper.get_head_revision()
-    if not head_revision:
-        # first migration
-        start_nodes = [
-            node for node, in_degree in mg._graph.in_degree() if in_degree == 0
-        ]
+        current = self.graph.get_node(head["revision_id"])
+        if not current:
+            raise ValueError(
+                f"Migration file for revision {head['revision_id']} not found"
+            )
 
-        if len(start_nodes) > 1:
-            raise ValueError("Multiple first revisions found")
-
-        start_node = start_nodes[0]
-
-    else:
-        head_rev_id = head_revision.get("id")
-        if not mg._graph:  # TODO
-            raise ValueError()
-
-        head_rev_node = mg._graph.nodes.get(head_rev_id)
-        if not head_rev_node:  # TODO
-            raise ValueError()
-
-        start_node = next(mg._graph.successors(head_rev_id))
-
-    if not steps:
-        # until the end of files
-        while mg._graph.out_degree(start_node) != 0:
-            revision = Revision(**mg._graph.nodes[start_node])
-            database_helper.migrate_up(revision)
-            start_node = next(mg._graph.successors(start_node))
-
-    else:
-        for i in range(steps):
-            revision = Revision(**mg._graph.nodes[start_node])
-            database_helper.migrate_up(revision)
-            start_node = next(mg._graph.successors(start_node))
-
-
-def migrate_down(config: Config, steps: int | None = None):
-    database_helper = get_database_impl(config.dialect, config=config)
-
-    mg = MigrationGraph.build(config.migration_dir)
-
-    # Apply create table migrations first
-    database_helper.create_table_migration()
-
-    head_revision = database_helper.get_head_revision()
-
-    if not head_revision:
-        return  # Nothing to down revise from
+        step = 0
+        while current and (steps is None or step < steps):
+            self.database.migrate_down(current)
+            if not current.down_revision_id:
+                break
+            current = self.graph.get_node(current.down_revision_id)
+            step += 1

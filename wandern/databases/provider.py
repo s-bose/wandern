@@ -13,9 +13,7 @@ class DatabaseProviders(StrEnum):
     MSSQL = "mssql"  # FUTURE: not implemented
 
 
-def get_database_impl(
-    provider: DatabaseProviders | str, config: Config
-) -> DatabaseMigration:
+def get_database_impl(provider: DatabaseProviders | str, config: Config):
     provider = DatabaseProviders[provider]
     if provider == DatabaseProviders.POSTGRESQL:
         return PostgresMigration(config=config)

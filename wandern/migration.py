@@ -1,6 +1,6 @@
 from wandern.config import Config
 from wandern.databases.provider import get_database_impl
-from wandern.graph_builder import MigrationGraph
+from wandern.graph import MigrationGraph
 from wandern.types import Revision
 
 

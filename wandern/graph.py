@@ -8,7 +8,7 @@ from wandern.exceptions import (
     CycleDetected,
 )
 
-from wandern.file import parse_sql_file
+from wandern.utils import parse_sql_file_content
 
 
 class MigrationGraph:
@@ -26,7 +26,7 @@ class MigrationGraph:
                 raise InvalidMigrationFile("Migration file must be a sql file")
 
             try:
-                migration_sql = parse_sql_file(file_path=file)
+                migration_sql = parse_sql_file_content(file_path=file)
             except ValueError as exc:
                 raise InvalidMigrationFile(
                     f"Error parsing migration file: {file.name}"

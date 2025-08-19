@@ -8,7 +8,7 @@ from dataclasses import asdict
 from wandern.config import Config
 from wandern.utils import generate_migration_filename
 from wandern.constants import DEFAULT_FILE_FORMAT
-from wandern.graph_builder import MigrationGraph
+from wandern.graph import MigrationGraph
 from wandern.exceptions import CycleDetected, DivergentbranchError
 
 

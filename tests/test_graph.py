@@ -1,6 +1,6 @@
 import pytest
 import networkx as nx
-from wandern.graph_builder import MigrationGraph
+from wandern.graph import MigrationGraph
 from wandern.exceptions import DivergentbranchError
 
 

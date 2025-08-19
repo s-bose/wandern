@@ -6,7 +6,7 @@ from psycopg.connection import Connection
 from wandern.config import Config
 from wandern.exceptions import ConnectError
 from wandern.databases.base import DatabaseMigration
-from wandern.types import Revision
+from wandern.models import Revision
 
 
 class PostgresMigration(DatabaseMigration):
@@ -24,35 +24,31 @@ class PostgresMigration(DatabaseMigration):
     def create_table_migration(self):
         query = SQL(
             """
-        CREATE TABLE IF NOT EXISTS public.{table} (
-            id TEXT PRIMARY KEY,
-            down_revision TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-        """
+            CREATE TABLE IF NOT EXISTS public.{table} (
+                revision_id TEXT PRIMARY KEY NOT NULL,
+                down_revision_id TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+            """
         ).format(table=Identifier(self.config.migration_table))
 
         with self.connect() as connection:
-            result = connection.execute(query)
-            return result.fetchone()
+            connection.execute(query)
 
     def drop_table_migration(self):
-        query = SQL(
-            """
-        DROP TABLE IF EXISTS public.{table}
-        """
-        ).format(table=Identifier(self.config.migration_table))
+        query = SQL("""DROP TABLE IF EXISTS public.{table}""").format(
+            table=Identifier(self.config.migration_table)
+        )
 
         with self.connect() as connection:
-            result = connection.execute(query)
-            return result.fetchone()
+            connection.execute(query)
 
     def get_head_revision(self) -> DictRow | None:
         query = SQL(
             """
-        SELECT * FROM public.{table}
-        ORDER BY created_at DESC LIMIT 1
-        """
+            SELECT * FROM public.{table}
+                ORDER BY created_at DESC LIMIT 1
+            """
         ).format(table=Identifier(self.config.migration_table))
 
         with self.connect() as connection:
@@ -60,38 +56,39 @@ class PostgresMigration(DatabaseMigration):
             return result.fetchone()
 
     def migrate_up(self, revision: Revision):
-        with self.connect() as connection:
-            with connection.transaction():  # BEGIN
-                connection.execute(revision["up_sql"])
+        query = SQL(
+            """
+            INSERT INTO public.{table}
+                VALUES (%(revision_id)s, %(down_revision_id)s, %(timestamp)s)
+            """
+        ).format(table=Identifier(self.config.migration_table))
 
-                update_migration_sql = self.compose_update_migration_sql()
+        with self.connect() as connection:
+            with connection.transaction():  # Begin transaction
+                connection.execute(revision.up_sql or "")
+
                 connection.execute(
-                    update_migration_sql,
+                    query,
                     params={
-                        "revision_id": revision["revision_id"],
-                        "down_revision_id": revision["down_revision_id"],
+                        "revision_id": revision.revision_id,
+                        "down_revision_id": revision.down_revision_id,
                         "timestamp": datetime.now(),
                     },
                 )
 
     def migrate_down(self, revision: Revision) -> None:
-        with self.connect() as connection:
-            with connection.transaction():  # BEGIN
-                connection.execute(revision["down_sql"])
-
-                update_migration_sql = self.compose_update_migration_sql()
-                connection.execute(
-                    update_migration_sql,
-                    params={
-                        "revision_id": revision["revision_id"],
-                        "down_revision_id": revision["down_revision_id"],
-                        "timestamp": datetime.now(),
-                    },
-                )
-
-    def compose_update_migration_sql(self):
-        return SQL(
-            """UPDATE public.{table}
-            SET id = %(revision_id)s, down_revision = %(down_revision_id)s, created_at = %(timestamp)s
+        query = SQL(
+            """
+            DELETE FROM public.{table}
+                WHERE revision_id = %(revision_id)s
             """
         ).format(table=Identifier(self.config.migration_table))
+
+        with self.connect() as connection:
+            with connection.transaction():  # BEGIN
+                connection.execute(revision.down_sql or "")
+
+                connection.execute(
+                    query,
+                    params={"revision_id": revision.revision_id},
+                )

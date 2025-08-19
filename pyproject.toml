@@ -42,3 +42,6 @@ dev = [
     "ruff>=0.12.7",
     "types-networkx>=3.4.2.20250509",
 ]
+test = [
+    "testcontainers[postgres]>=4.12.0",
+]

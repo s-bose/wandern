@@ -22,7 +22,6 @@ def generate_migration_filename(
     fmt: str,
     version: str,
     message: str | None,
-    prefix: str | None = None,
     author: str | None = None,
 ):
     current_timestamp = datetime.now(tz=UTC)
@@ -38,7 +37,6 @@ def generate_migration_filename(
         "minute": str(current_timestamp.minute),
         "second": str(current_timestamp.second),
         "author": author,
-        "prefix": prefix,
     }
     if not kwargs["version"] and not (kwargs["slug"] or kwargs["message"]):
         raise ValueError("version or slug or message is required")

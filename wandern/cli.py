@@ -11,9 +11,10 @@ from wandern.utils import generate_migration_filename
 from wandern.templates import generate_template
 from questionary import text
 
-# from wandern.graph_builder import DAGBuilder
+from wandern.graph import MigrationGraph
 
 from wandern.databases.postgresql import PostgresMigration
+from wandern.migration import MigrationService
 from wandern import commands
 from wandern.agents.sql_agent import SqlAgent
 
@@ -49,86 +50,81 @@ def prompt():
     agent.run(prompt)
 
 
-# @app.command()
-# def generate(
-#     message: Annotated[
-#         str | None,
-#         typer.Option(
-#             help="A brief description of the migration",
-#         ),
-#     ] = None,
-# ):
-#     config_dir = os.path.abspath(".wd.json")
-#     if not os.access(config_dir, os.F_OK):
-#         rich.print("[red]No wandern config found in the current directory[/red]")
-#         raise typer.Exit(code=1)
+@app.command()
+def generate(
+    message: Annotated[
+        str | None,
+        typer.Option(
+            help="A brief description of the migration",
+        ),
+    ] = None,
+    author: Annotated[
+        str | None,
+        typer.Option(help="Optional author of the migration (default: system user)"),
+    ] = None,
+):
+    config_dir = os.path.abspath(".wd.json")
+    if not os.access(config_dir, os.F_OK):
+        rich.print("[red]No wandern config found in the current directory[/red]")
+        raise typer.Exit(code=1)
 
-#     with open(config_dir) as file:
-#         config = Config(**json.load(file))
+    with open(config_dir) as file:
+        config = Config(**json.load(file))
 
-#     if not config.migration_dir:
-#         rich.print("[red]No migration directory specified in the config[/red]")
-#         raise typer.Exit(code=1)
+    if not config.migration_dir:
+        rich.print("[red]No migration directory specified in the config[/red]")
+        raise typer.Exit(code=1)
 
-#     migration_dir = os.path.abspath(config.migration_dir)
-#     if not os.access(migration_dir, os.W_OK):
-#         rich.print("[red]Migration directory is not writeable[/red]")
-#         raise typer.Exit(code=1)
+    migration_dir = os.path.abspath(config.migration_dir)
+    if not os.access(migration_dir, os.W_OK):
+        rich.print("[red]Migration directory is not writeable[/red]")
+        raise typer.Exit(code=1)
 
-#     version = uuid4().hex[:8]
-
-#     filename = generate_migration_filename(
-#         fmt=config.file_format or TEMPLATE_DEFAULT_FILENAME,
-#         version=version,
-#         message=message,
-#     )
-
-#     builder = DAGBuilder(migration_dir)
-#     revision_id, down_revision_id = builder.build()
-#     print(f"{revision_id=}: {down_revision_id=}")
-
-#     if down_revision_id is None:
-#         # first migration
-#         migration_body = generate_template(
-#             filename="migration.sql.j2",
-#             kwargs={
-#                 "timestamp": datetime.now().isoformat(),
-#                 "version": version,
-#                 "revises": None,
-#                 "message": message,
-#                 "tags": None,
-#                 "author": None,
-#             },
-#         )
-
-#     else:
-#         migration_body = generate_template(
-#             filename="migration.sql.j2",
-#             kwargs={
-#                 "timestamp": datetime.now().isoformat(),
-#                 "version": version,
-#                 "revises": revision_id,
-#                 "message": message,
-#                 "tags": None,
-#                 "author": None,
-#             },
-#         )
-
-#     print(migration_body)
-
-#     with open(os.path.join(migration_dir, filename), "w") as file:
-#         file.write(migration_body)
-#         rich.print(f"[green]Created migration file {filename}[/green]")
+    migration_service = MigrationService(config)
+    filename = migration_service.generate_migration(message=message, author=author)
+    rich.print(f"[green]Generated file:[/green] [yellow]{filename}[/yellow]")
 
 
 @app.command()
-def upgrade():
-    pass
+def upgrade(
+    steps: Annotated[
+        int | None,
+        typer.Option(
+            help="Number of migration steps to apply (default: all)",
+        ),
+    ] = None,
+):
+    config_dir = os.path.abspath(".wd.json")
+    if not os.access(config_dir, os.F_OK):
+        rich.print("[red]No wandern config found in the current directory[/red]")
+        raise typer.Exit(code=1)
+
+    with open(config_dir) as file:
+        config = Config(**json.load(file))
+
+    migration_service = MigrationService(config)
+    migration_service.upgrade(steps=steps)
 
 
 @app.command()
-def downgrade():
-    pass
+def downgrade(
+    steps: Annotated[
+        int | None,
+        typer.Option(
+            help="Number of migration steps to apply (default: all)",
+        ),
+    ] = None,
+):
+    config_dir = os.path.abspath(".wd.json")
+    if not os.access(config_dir, os.F_OK):
+        rich.print("[red]No wandern config found in the current directory[/red]")
+        raise typer.Exit(code=1)
+
+    with open(config_dir) as file:
+        config = Config(**json.load(file))
+
+    migration_service = MigrationService(config)
+    migration_service.downgrade(steps=steps)
 
 
 @app.command()

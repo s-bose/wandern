@@ -13,10 +13,8 @@ from wandern.utils import parse_sql_file_content
 
 
 class MigrationGraph:
-    def __init__(self, graph: nx.DiGraph | None = None):
-        self._graph: nx.DiGraph
-        if graph:
-            self._graph = graph
+    def __init__(self, graph: nx.DiGraph):
+        self._graph: nx.DiGraph = graph
 
     @classmethod
     def build(cls, migration_dir: str):
@@ -54,7 +52,10 @@ class MigrationGraph:
             if len(out_edges) == 0:
                 leaf_node = node
 
-        return leaf_node
+        if leaf_node is None:
+            return None
+        node_data = self._graph.nodes[leaf_node]
+        return Revision(**node_data)
 
     @staticmethod
     def check_cycles(graph: nx.DiGraph):
@@ -100,19 +101,15 @@ class MigrationGraph:
             if current_node:
                 yield Revision(**self._graph.nodes[current_node])
 
-    def iter_from(self, start: str, steps: int | None = None):
+    def iter_from(self, start: str):
         if start not in self._graph.nodes:
             raise ValueError(f"Revision: {start} does not exist in the graph")
 
         current_node = start
-        yield Revision(**self._graph.nodes[current_node])
-
-        count = 0
-        while current_node and (steps is None or count < steps):
+        while current_node:
             current_node = next(self._graph.successors(current_node), None)
             if current_node:
                 yield Revision(**self._graph.nodes[current_node])
-            count += 1
 
     def get_node(self, revision_id: str) -> Revision | None:
         if revision_id not in self._graph.nodes:

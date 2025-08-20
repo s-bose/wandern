@@ -20,7 +20,6 @@ class FileTemplateArgs(TypedDict):
     slug: str | None
     message: str | None
     author: str | None
-    prefix: str | None
 
     # datetime
     epoch: float | None

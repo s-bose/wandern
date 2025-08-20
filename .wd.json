@@ -1,5 +1,5 @@
 {
     "dialect": "postgresql",
     "dsn": "postgresql://wandern:password@localhost:6432/wd",
-    "migration_dir": "tests/migrations"
+    "migration_dir": "wd_migrations"
 }

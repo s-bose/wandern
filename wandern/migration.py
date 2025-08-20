@@ -2,7 +2,7 @@ import rich
 import os
 from uuid import uuid4
 from datetime import datetime
-from wandern.config import Config
+from wandern.models import Config
 from wandern.databases.provider import get_database_impl
 from wandern.databases.base import DatabaseMigration
 from wandern.graph import MigrationGraph

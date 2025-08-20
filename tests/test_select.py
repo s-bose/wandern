@@ -1,5 +1,5 @@
 from wandern.service import MigrationService
-from wandern.config import Config
+from wandern.models import Config
 
 
 # @pytest.mark.asyncio

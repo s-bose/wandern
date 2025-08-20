@@ -3,16 +3,16 @@ import json
 import os
 import typer
 import rich
+from rich.panel import Panel
+from rich.prompt import Prompt
 from datetime import datetime
 from uuid import uuid4
-from wandern.constants import DEFAULT_FILE_FORMAT
-from wandern.config import Config
-from wandern.utils import generate_migration_filename
-from wandern.templates import generate_template
 from questionary import text
 
-from wandern.graph import MigrationGraph
-
+from wandern.constants import DEFAULT_FILE_FORMAT
+from wandern.models import Config
+from wandern.utils import generate_migration_filename
+from wandern.templates import generate_template
 from wandern.databases.postgresql import PostgresMigration
 from wandern.migration import MigrationService
 from wandern import commands
@@ -41,13 +41,13 @@ def init(
     commands.init(interactive=interactive, directory=directory)
 
 
-@app.command()
-def prompt():
-    agent = SqlAgent()
-    prompt = text(
-        "Write what you want to generate in the migration script in plain english:"
-    ).ask()
-    agent.run(prompt)
+# @app.command()
+# def prompt():
+#     agent = SqlAgent()
+#     prompt = text(
+#         "Write what you want to generate in the migration script in plain english:"
+#     ).ask()
+#     agent.run(prompt)
 
 
 @app.command()
@@ -62,6 +62,14 @@ def generate(
         str | None,
         typer.Option(help="Optional author of the migration (default: system user)"),
     ] = None,
+    prompt: Annotated[
+        bool,
+        typer.Option(
+            "--prompt",
+            "-p",
+            help="Autogenerate migration based on natural language prompt",
+        ),
+    ] = False,
 ):
     config_dir = os.path.abspath(".wd.json")
     if not os.access(config_dir, os.F_OK):
@@ -166,5 +174,4 @@ def deinit():
     """Removes the migration dir and migration table.
     DOES NOT undo the migrations. Use `reset` for that.
     """
-
     pass

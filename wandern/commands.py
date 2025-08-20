@@ -5,7 +5,7 @@ import json
 import questionary
 import uuid
 from dataclasses import asdict
-from wandern.config import Config
+from wandern.models import Config
 from wandern.utils import generate_migration_filename
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.graph import MigrationGraph
@@ -100,17 +100,3 @@ def generate(message: str | None = None):
         version=version,
         message=message,
     )
-
-
-def save_config(config: Config, path: str):
-    with open(path, "w") as cfg_file:
-        json.dump(asdict(config), cfg_file, indent=4)
-
-
-def load_config(path: str) -> Config:
-    if not os.access(path, os.F_OK):
-        rich.print("[red]No wandern config found in the current directory[/red]")
-        raise typer.Exit(code=1)
-
-    with open(path) as file:
-        return Config(**json.load(file))

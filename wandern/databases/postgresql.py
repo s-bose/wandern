@@ -3,7 +3,7 @@ import psycopg
 from psycopg.sql import SQL, Identifier
 from psycopg.rows import dict_row, DictRow
 from psycopg.connection import Connection
-from wandern.config import Config
+from wandern.models import Config
 from wandern.exceptions import ConnectError
 from wandern.databases.base import DatabaseMigration
 from wandern.models import Revision

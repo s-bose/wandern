@@ -1,6 +1,6 @@
 import pytest
 import os
-from wandern.config import Config
+from wandern.models import Config
 from testcontainers.postgres import PostgresContainer
 
 

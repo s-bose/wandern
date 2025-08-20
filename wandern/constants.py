@@ -25,3 +25,6 @@ REGEX_MIGRATION_PARSER: Pattern = re.compile(
     """,
     re.DOTALL | re.VERBOSE,
 )
+
+
+DEFAULT_CONFIG_FILENAME = ".wd.json"

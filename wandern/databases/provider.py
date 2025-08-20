@@ -1,9 +1,7 @@
 from enum import StrEnum
-from .base import DatabaseMigration
+from wandern.databases.postgresql import PostgresMigration
 
-from .postgresql import PostgresMigration
-
-from wandern.config import Config
+from wandern.models import Config
 
 
 class DatabaseProviders(StrEnum):

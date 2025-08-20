@@ -3,8 +3,12 @@ from datetime import datetime, UTC
 from pathlib import Path
 import hashlib
 import base64
-from wandern.config import FileTemplateArgs
-from wandern.constants import REGEX_MIGRATION_PARSER
+import os
+import rich
+import typer
+import json
+from wandern.models import FileTemplateArgs, Config
+from wandern.constants import REGEX_MIGRATION_PARSER, DEFAULT_CONFIG_FILENAME
 from wandern.models import Revision
 
 
@@ -85,3 +89,20 @@ def parse_sql_file_content(file_path: str | Path):
             up_sql=up_sql,
             down_sql=down_sql,
         )
+
+
+def load_config():
+    config_dir = os.path.abspath(DEFAULT_CONFIG_FILENAME)
+    if not os.access(config_dir, os.F_OK):
+        rich.print("[red]No wandern config found in the current directory[/red]")
+        raise typer.Exit(1)
+
+    with open(config_dir, encoding="utf-8") as file:
+        return Config(**json.load(file))
+
+
+def save_config(config: Config):
+    config_dir = os.path.abspath(DEFAULT_CONFIG_FILENAME)
+
+    with open(config_dir, "w", encoding="utf-8") as file:
+        file.write(config.model_dump_json(indent=4))

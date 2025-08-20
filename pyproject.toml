@@ -43,5 +43,6 @@ dev = [
     "types-networkx>=3.4.2.20250509",
 ]
 test = [
+    "pytest-cov>=6.2.1",
     "testcontainers[postgres]>=4.12.0",
 ]

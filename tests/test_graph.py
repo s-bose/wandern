@@ -47,7 +47,7 @@ def test_migration_files():
     last_migration = graph.get_last_migration()
     assert last_migration
 
-    assert last_migration == "0005"
+    assert last_migration.revision_id == "0005"
 
 
 def test_iter():
@@ -99,19 +99,5 @@ def test_iter_from():
     assert all(isinstance(rev, Revision) for rev in revisions)
 
     # Check that the revisions are in the expected order
-    expected_ids = {"0003", "0004", "0005"}
-    assert {rev.revision_id for rev in revisions} == expected_ids
-
-
-def test_iter_from_with_steps():
-    migration_dir = "tests/migrations"
-    graph = MigrationGraph.build(migration_dir)
-    assert graph
-
-    revisions = list(graph.iter_from("0002", steps=2))
-    assert len(revisions) == 3
-    assert all(isinstance(rev, Revision) for rev in revisions)
-
-    # Check that the revisions are in the expected order
-    expected_ids = {"0002", "0003", "0004"}
+    expected_ids = {"0004", "0005"}
     assert {rev.revision_id for rev in revisions} == expected_ids

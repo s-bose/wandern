@@ -4,9 +4,7 @@ from uuid import uuid4
 from datetime import datetime
 from wandern.models import Config
 from wandern.databases.provider import get_database_impl
-from wandern.databases.base import DatabaseMigration
 from wandern.graph import MigrationGraph
-from wandern.models import Revision
 from wandern.utils import generate_migration_filename
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.templates import generate_template

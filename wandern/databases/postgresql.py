@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 import psycopg
 from psycopg.sql import SQL, Identifier
 from psycopg.rows import dict_row, DictRow
@@ -17,7 +16,9 @@ class PostgresMigration(DatabaseMigration):
     def connect(self) -> Connection[DictRow]:
         try:
             return psycopg.connect(
-                self.config.dsn, autocommit=True, row_factory=dict_row  # type: ignore
+                self.config.dsn,
+                autocommit=True,
+                row_factory=dict_row,  # type: ignore
             )
         except Exception as exc:
             raise ConnectError("Failed to connect to the database") from exc

@@ -1,12 +1,12 @@
 from enum import StrEnum
 from wandern.databases.postgresql import PostgresMigration
-
+from wandern.databases.sqlite import SQLiteMigration
 from wandern.models import Config
 
 
 class DatabaseProviders(StrEnum):
     POSTGRESQL = "postgresql"
-    SQLITE = "sqlite"  # FUTURE: not implemented
+    SQLITE = "sqlite"
     MYSQL = "mysql"  # FUTURE: not implemented
     MSSQL = "mssql"  # FUTURE: not implemented
 
@@ -15,5 +15,7 @@ def get_database_impl(provider: DatabaseProviders | str, config: Config):
     provider = DatabaseProviders(provider)
     if provider == DatabaseProviders.POSTGRESQL:
         return PostgresMigration(config=config)
+    elif provider == DatabaseProviders.SQLITE:
+        return SQLiteMigration(config=config)
     else:
         raise NotImplementedError(f"Provider {provider!s} is not implemented yet!")

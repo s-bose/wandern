@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 import psycopg
 from psycopg.sql import SQL, Identifier
 from psycopg.rows import dict_row, DictRow
@@ -92,3 +93,15 @@ class PostgresMigration(DatabaseMigration):
                     query,
                     params={"revision_id": revision.revision_id},
                 )
+
+    def list_migrations(self):
+        query = SQL(
+            """
+            SELECT * FROM public.{table}
+            ORDER BY created_at DESC
+            """
+        ).format(table=Identifier(self.config.migration_table))
+
+        with self.connect() as connection:
+            result = connection.execute(query)
+            return result.fetchall()

@@ -11,7 +11,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "agno>=1.7.11",
     "google-genai>=1.30.0",
     "jinja2>=3.1.6",
     "networkx>=3.2.1",
@@ -38,11 +37,5 @@ check_untyped_defs = true
 dev-dependencies = ["pytest>=8.3.3", "pytest-asyncio>=0.24.0"]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.12.7",
-    "types-networkx>=3.4.2.20250509",
-]
-test = [
-    "pytest-cov>=6.2.1",
-    "testcontainers[postgres]>=4.12.0",
-]
+dev = ["ruff>=0.12.7", "types-networkx>=3.4.2.20250509"]
+test = ["pytest-cov>=6.2.1", "testcontainers[postgres]>=4.12.0"]

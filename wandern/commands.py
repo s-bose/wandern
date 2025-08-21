@@ -2,36 +2,33 @@ import os
 import typer
 import rich
 import json
-import questionary
-import uuid
+from questionary import form, text, select, password, path
 from dataclasses import asdict
 from wandern.models import Config
-from wandern.utils import generate_migration_filename
+from wandern.utils import generate_migration_filename, load_config, save_config
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.graph import MigrationGraph
 from wandern.exceptions import CycleDetected, DivergentbranchError
 
 
 def init(interactive: bool = False, directory: str | None = None):
-    config_dir = os.path.abspath(".wd.json")
-    if os.access(config_dir, os.F_OK):
-        rich.print("[red]Wandern config already exists in the current directory[/red]")
-        raise typer.Exit(code=1)
+    # config_dir = os.path.abspath(".wd.json")
+    # if os.access(config_dir, os.F_OK):
+    #     rich.print("[red]Wandern config already exists in the current directory[/red]")
+    #     raise typer.Exit(code=1)
 
     if interactive:
-        migration_dir = questionary.path(
+        migration_dir = path(
             "Enter the path to the migration directory:", only_directories=True
         ).ask()
 
-        db_dsn = questionary.form(
-            provider=questionary.select(
-                "Select the database provider:", choices=["postgresql"]
-            ),
-            username=questionary.text("Enter the database username:"),
-            password=questionary.password("Enter the database password:"),
-            host=questionary.text("Enter the database host:", default="localhost"),
-            port=questionary.text("Enter the database port:", default="5432"),
-            database=questionary.text("Enter the database name:"),
+        db_dsn = form(
+            provider=select("Select the database provider:", choices=["postgresql"]),
+            username=text("Enter the database username:"),
+            password=password("Enter the database password:"),
+            host=text("Enter the database host:", default="localhost"),
+            port=text("Enter the database port:", default="5432"),
+            database=text("Enter the database name:"),
         ).ask()
 
         dsn = f"{db_dsn['provider']}://{db_dsn['username']}:{db_dsn['password']}@{db_dsn['host']}:{db_dsn['port']}/{db_dsn['database']}"
@@ -64,39 +61,3 @@ def init(interactive: bool = False, directory: str | None = None):
         rich.print(
             "[yellow]Created config with empty dsn, please edit the dsn manually.[/yellow]"
         )
-
-
-def validate():
-    """validates the migration dependency graph"""
-    # config_dir = os.path.abspath(".wd.json")
-
-    # config = load_config(config_dir)
-    # if not config.migration_dir:
-    #     rich.print("[red]Migration directory does not exist[/red]")
-    #     raise typer.Exit(1)
-
-    # migration_graph = MigrationGraph.build(config.migration_dir)
-    # try:
-    #     last_revision = migration_graph.get_last_migration()
-    # except CycleDetected as exc:
-
-
-def generate(message: str | None = None):
-    config_dir = os.path.abspath(".wd.json")
-    config = load_config(config_dir)
-
-    if not config.migration_dir:
-        rich.print("[red]No migration directory specified in the config[/red]")
-        raise typer.Exit(code=1)
-    migration_dir = os.path.abspath(config.migration_dir)
-    if not os.access(migration_dir, os.W_OK):
-        rich.print("[red]Migration directory is not writeable[/red]")
-        raise typer.Exit(1)
-
-    version = uuid.uuid4().hex[:8]
-
-    filename = generate_migration_filename(
-        fmt=config.file_format or DEFAULT_FILE_FORMAT,
-        version=version,
-        message=message,
-    )

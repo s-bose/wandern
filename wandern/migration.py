@@ -1,4 +1,7 @@
 import rich
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
 import os
 from uuid import uuid4
 from datetime import datetime
@@ -103,3 +106,29 @@ class MigrationService:
             file.write(migration_body)
 
         return filename
+
+    def list_migrations(self):
+        revisions = self.database.list_migrations()
+
+        table = Table(title="Migrations")
+
+        table.add_column("Revision ID", style="cyan", no_wrap=True, justify="right")
+        table.add_column("Down Revision", style="magenta", justify="right")
+        table.add_column("Applied At", style="green", justify="right")
+
+        if revisions:
+            table.add_row(
+                f'[bright_magenta](HEAD)[/bright_magenta] {revisions[0]["revision_id"]}',
+                f'{revisions[0]["down_revision_id"] or "None"}',
+                f'{revisions[0]["created_at"].strftime("%Y-%m-%d %H:%M:%S")}',
+            )
+            for rev in revisions[1:]:
+                table.add_row(
+                    rev["revision_id"],
+                    rev["down_revision_id"] or "None",
+                    rev["created_at"].strftime("%Y-%m-%d %H:%M:%S"),
+                )
+
+        console = Console()
+        panel = Panel(table, title="Migrations table")
+        console.print(panel)

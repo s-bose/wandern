@@ -3,22 +3,23 @@ import json
 import os
 import typer
 import rich
+from pathlib import Path
 from rich.panel import Panel
 from rich.prompt import Prompt
 from datetime import datetime
 from uuid import uuid4
 from questionary import text
 
-from wandern.constants import DEFAULT_FILE_FORMAT
+
+from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_CONFIG_FILENAME
 from wandern.models import Config
-from wandern.utils import generate_migration_filename
-from wandern.templates import generate_template
+from wandern.utils import load_config, save_config
 from wandern.databases.postgresql import PostgresMigration
 from wandern.migration import MigrationService
 from wandern import commands
-from wandern.agents.sql_agent import SqlAgent
 
 app = typer.Typer(rich_markup_mode="rich")
+config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME
 
 
 @app.command()
@@ -39,15 +40,6 @@ def init(
     ] = None,
 ):
     commands.init(interactive=interactive, directory=directory)
-
-
-# @app.command()
-# def prompt():
-#     agent = SqlAgent()
-#     prompt = text(
-#         "Write what you want to generate in the migration script in plain english:"
-#     ).ask()
-#     agent.run(prompt)
 
 
 @app.command()
@@ -71,23 +63,7 @@ def generate(
         ),
     ] = False,
 ):
-    config_dir = os.path.abspath(".wd.json")
-    if not os.access(config_dir, os.F_OK):
-        rich.print("[red]No wandern config found in the current directory[/red]")
-        raise typer.Exit(code=1)
-
-    with open(config_dir) as file:
-        config = Config(**json.load(file))
-
-    if not config.migration_dir:
-        rich.print("[red]No migration directory specified in the config[/red]")
-        raise typer.Exit(code=1)
-
-    migration_dir = os.path.abspath(config.migration_dir)
-    if not os.access(migration_dir, os.W_OK):
-        rich.print("[red]Migration directory is not writeable[/red]")
-        raise typer.Exit(code=1)
-
+    config = load_config(config_path)
     migration_service = MigrationService(config)
     filename = migration_service.generate_migration(message=message, author=author)
     rich.print(f"[green]Generated file:[/green] [yellow]{filename}[/yellow]")
@@ -133,6 +109,16 @@ def downgrade(
 
     migration_service = MigrationService(config)
     migration_service.downgrade(steps=steps)
+
+
+@app.command()
+def view():
+    """View the currently applied migrations in db"""
+
+    config = load_config(config_path)
+
+    migration_service = MigrationService(config)
+    migration_service.list_migrations()
 
 
 @app.command()

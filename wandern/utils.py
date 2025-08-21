@@ -91,18 +91,25 @@ def parse_sql_file_content(file_path: str | Path):
         )
 
 
-def load_config():
-    config_dir = os.path.abspath(DEFAULT_CONFIG_FILENAME)
+def load_config(path: str | Path):
+    config_dir = os.path.abspath(path)
     if not os.access(config_dir, os.F_OK):
         rich.print("[red]No wandern config found in the current directory[/red]")
         raise typer.Exit(1)
 
     with open(config_dir, encoding="utf-8") as file:
-        return Config(**json.load(file))
+        config = Config(**json.load(file))
+
+    migration_dir = os.path.abspath(config.migration_dir)
+    if not os.access(migration_dir, os.W_OK):
+        rich.print("[red]Migration directory is not writeable[/red]")
+        raise typer.Exit(code=1)
+
+    return config
 
 
-def save_config(config: Config):
-    config_dir = os.path.abspath(DEFAULT_CONFIG_FILENAME)
+def save_config(config: Config, path: str | Path):
+    config_dir = os.path.abspath(path)
 
     with open(config_dir, "w", encoding="utf-8") as file:
         file.write(config.model_dump_json(indent=4))

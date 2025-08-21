@@ -11,10 +11,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "google-genai>=1.30.0",
     "jinja2>=3.1.6",
     "networkx>=3.2.1",
-    "psycopg[binary]>=3.2.9",
     "questionary>=2.1.0",
     "rich>=13.9.4",
     "typer>=0.13.0",
@@ -23,6 +21,17 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/s-bose/wandern"
 Issues = "https://github.com/s-bose/wandern/issues"
+
+[project.optional-dependencies]
+postgresql = [
+    "psycopg[binary]>=3.2.9",
+]
+openai = [
+    "pydantic-ai-slim[openai]>=0.7.4",
+]
+google-genai = [
+    "pydantic-ai-slim[google]>=0.7.4",
+]
 
 [build-system]
 requires = ["setuptools>=80.9.0"]

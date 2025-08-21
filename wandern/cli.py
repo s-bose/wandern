@@ -3,6 +3,9 @@ import json
 import os
 import typer
 import rich
+from rich.tree import Tree
+from rich.panel import Panel
+from rich.console import Console
 from pathlib import Path
 from rich.panel import Panel
 from rich.prompt import Prompt
@@ -161,3 +164,20 @@ def deinit():
     DOES NOT undo the migrations. Use `reset` for that.
     """
     pass
+
+
+@app.command()
+def tree():
+    """Visualize migration sequence as a tree"""
+
+    config = load_config(config_path)
+    migration_service = MigrationService(config)
+    revisions = migration_service.database.list_migrations()
+
+    console = Console()
+    _tree = Tree("Migration Tree")
+
+    for revision in revisions:
+        _tree.add(f"{revision['revision_id']} - {revision['created_at']}")
+
+    console.print(_tree)

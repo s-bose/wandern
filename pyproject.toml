@@ -13,6 +13,7 @@ classifiers = [
 dependencies = [
     "jinja2>=3.1.6",
     "networkx>=3.2.1",
+    "pydantic>=2.11.7",
     "questionary>=2.1.0",
     "rich>=13.9.4",
     "typer>=0.13.0",

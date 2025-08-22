@@ -172,12 +172,4 @@ def tree():
 
     config = load_config(config_path)
     migration_service = MigrationService(config)
-    revisions = migration_service.database.list_migrations()
-
-    console = Console()
-    _tree = Tree("Migration Tree")
-
-    for revision in revisions:
-        _tree.add(f"{revision['revision_id']} - {revision['created_at']}")
-
-    console.print(_tree)
+    migration_service.list_migrations()

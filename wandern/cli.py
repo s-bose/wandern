@@ -1,6 +1,7 @@
 from typing import Annotated, Optional
 import json
 import os
+import questionary
 import typer
 import rich
 from rich.tree import Tree
@@ -12,7 +13,8 @@ from rich.prompt import Prompt
 from datetime import datetime
 from uuid import uuid4
 from questionary import text
-
+from wandern.agents.sql_agent import MigrationAgent
+from wandern.templates import generate_template
 
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_CONFIG_FILENAME
 from wandern.models import Config
@@ -130,32 +132,7 @@ def reset():
     Rolls back all the migrations till now
     """
 
-    db = PostgresMigration
-
-
-# @app.command()
-# def ping():
-#     """
-#     Ping database to check status and currently active migration
-#     """
-
-#     config_dir = os.path.abspath(".wd.json")
-#     if not os.access(config_dir, os.F_OK):
-#         rich.print("[red]No wandern config found in the current directory[/red]")
-#         raise typer.Exit(code=1)
-
-#     with open(config_dir) as file:
-#         config = Config(**json.load(file))
-
-#     db = PostgresMigrationService(config)
-#     result = db.get_head_revision()
-#     if not result:
-#         rich.print("[red]No migrations found in the database[/red]")
-#         raise typer.Exit(code=1)
-#     rich.print(
-#         f"Current head: [green]{result['id']}[/green] - revises [yellow]{result['down_revision']}[/yellow]"
-#         f" Created at: {result['created_at']}"
-#     )
+    pass
 
 
 @app.command()
@@ -173,3 +150,20 @@ def tree():
     config = load_config(config_path)
     migration_service = MigrationService(config)
     migration_service.list_migrations()
+
+
+@app.command()
+def prompt():
+    agent = MigrationAgent()
+    prompt = questionary.text("Prompt:").ask()
+    rich.print(f"Prompt: {prompt}")
+    response = agent.run(prompt)
+    # r
+
+    data = generate_template(
+        filename="migration.sql.j2",
+        kwargs={**response.model_dump(), "timestamp": datetime.now()},
+    )
+
+    with open("generated_migration.sql", "w") as f:
+        f.write(data)

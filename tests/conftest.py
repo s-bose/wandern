@@ -1,7 +1,7 @@
 import pytest
 import os
-from wandern.models import Config
 from testcontainers.postgres import PostgresContainer
+from wandern.models import Config
 
 
 postgres = PostgresContainer("postgres:latest")

@@ -24,15 +24,9 @@ Homepage = "https://github.com/s-bose/wandern"
 Issues = "https://github.com/s-bose/wandern/issues"
 
 [project.optional-dependencies]
-postgresql = [
-    "psycopg[binary]>=3.2.9",
-]
-openai = [
-    "pydantic-ai-slim[openai]>=0.7.4",
-]
-google-genai = [
-    "pydantic-ai-slim[google]>=0.7.4",
-]
+postgresql = ["psycopg[binary]>=3.2.9"]
+openai = ["pydantic-ai-slim[openai]>=0.7.4"]
+google-genai = ["pydantic-ai-slim[google]>=0.7.4"]
 
 [build-system]
 requires = ["setuptools>=80.9.0"]
@@ -48,4 +42,7 @@ dev-dependencies = ["pytest>=8.3.3", "pytest-asyncio>=0.24.0"]
 
 [dependency-groups]
 dev = ["ruff>=0.12.7", "types-networkx>=3.4.2.20250509"]
-test = ["pytest-cov>=6.2.1", "testcontainers[postgres]>=4.12.0"]
+test = [
+    "pytest-cov>=6.2.1",
+ "testcontainers[postgres]>=4.12.0",
+]

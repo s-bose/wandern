@@ -9,6 +9,7 @@ _ErrorT = TypeVar("_ErrorT")
 
 class AgentResponse(BaseModel, Generic[_DataT, _ErrorT]):
     data: _DataT
+    message: str | None = None
     error: _ErrorT | None = None
 
 

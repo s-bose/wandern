@@ -13,7 +13,7 @@ from wandern.databases.provider import get_database_impl
 from wandern.graph import MigrationGraph
 from wandern.utils import generate_migration_filename
 from wandern.constants import DEFAULT_FILE_FORMAT
-from wandern.templates import generate_template
+from wandern.templates.engine import generate_template
 
 
 class MigrationService:
@@ -70,46 +70,35 @@ class MigrationService:
             current = self.graph.get_node(current.down_revision_id)
             count += 1
 
-    def generate_migration(
+    def create_empty_migration(
         self,
         message: str | None,
+        down_revision_id: str | None,
         author: str | None = None,
         tags: list[str] | None = None,
-    ) -> tuple[str, Revision]:
+    ) -> Revision:
         version = uuid4().hex[:8]
-        filename = generate_migration_filename(
-            fmt=self.config.file_format or DEFAULT_FILE_FORMAT,
-            version=version,
-            message=message,
-            author=author,
-        )
 
-        last_revision_content = self.graph.get_last_migration()
-
-        revision_id = (
-            last_revision_content.revision_id if last_revision_content else None
-        )
-
-        revision = Revision(
+        return Revision(
             revision_id=version,
-            down_revision_id=revision_id,
+            down_revision_id=down_revision_id,
             message=message or "",
             tags=tags,
             author=author,
             up_sql=None,
             down_sql=None,
         )
+
+    def save_migration(self, revision: Revision):
+        filename = generate_migration_filename(
+            fmt=self.config.file_format or DEFAULT_FILE_FORMAT,
+            version=revision.revision_id,
+            message=revision.message,
+            author=revision.author,
+        )
+
         migration_body = generate_template(
-            template_filename="migration.sql.j2",
-            revision=Revision(
-                revision_id=version,
-                down_revision_id=revision_id,
-                message=message or "",
-                tags=tags,
-                author=author,
-                up_sql=None,
-                down_sql=None,
-            ),
+            template_filename="migration.sql.j2", revision=revision
         )
 
         migration_dir_abs = os.path.abspath(self.config.migration_dir)
@@ -118,7 +107,7 @@ class MigrationService:
         ) as file:
             file.write(migration_body)
 
-        return filename, revision
+        return filename
 
     def list_migrations(self):
         revisions = self.database.list_migrations()

@@ -9,12 +9,11 @@ from rich.panel import Panel
 from rich.console import Console
 from pathlib import Path
 from rich.panel import Panel
-from rich.prompt import Prompt
 from datetime import datetime
 from uuid import uuid4
 from questionary import text
 from wandern.agents.sql_agent import MigrationAgent
-from wandern.templates import generate_template
+from wandern.templates.engine import generate_template
 from wandern.models import Revision
 from wandern.agents.models import MigrationAgentResponse
 
@@ -54,6 +53,8 @@ def generate(
     message: Annotated[
         str | None,
         typer.Option(
+            "--message",
+            "-m",
             help="A brief description of the migration",
         ),
     ] = None,
@@ -72,8 +73,38 @@ def generate(
 ):
     config = load_config(config_path)
     migration_service = MigrationService(config)
-    filename = migration_service.generate_migration(message=message, author=author)
-    rich.print(f"[green]Generated file:[/green] [yellow]{filename}[/yellow]")
+
+    last_migration = migration_service.graph.get_last_migration()
+    down_revision_id = last_migration.revision_id if last_migration else None
+
+    past_revisions = list(migration_service.graph.iter())
+
+    if prompt:
+        agent = MigrationAgent(
+            down_revision_id=down_revision_id, past_revisions=past_revisions
+        )
+        prompt_text = typer.prompt("Describe the migration")
+        show_usage = typer.confirm("Show usage", prompt_suffix="?")
+
+        response = agent.run(prompt_text, usage=show_usage)
+        if response.error:
+            rich.print(f"[red]Error:[/red] {response.error}")
+            raise typer.Exit(code=1)
+
+        # revision = response.data
+
+        rich.print(f"> [green][italic]{response.message}[/italic][/green]")
+
+    else:
+        revision = migration_service.create_empty_migration(
+            message=message, author=author, down_revision_id=down_revision_id
+        )
+
+    # filename = migration_service.save_migration(revision)
+    # rich.print(
+    #     f"[green]Generated migration file: {filename} for revision:[/green]"
+    #     f" [yellow]{revision.revision_id}[/yellow]"
+    # )
 
 
 @app.command()
@@ -154,23 +185,23 @@ def tree():
     migration_service.list_migrations()
 
 
-@app.command()
-def prompt():
-    agent = MigrationAgent()
-    prompt = questionary.text("Prompt:").ask()
-    rich.print(f"Prompt: {prompt}")
-    response: MigrationAgentResponse = agent.run(prompt)  # type: ignore
+# @app.command()
+# def prompt():
+#     agent = MigrationAgent()
+#     prompt = questionary.text("Prompt:").ask()
+#     rich.print(f"Prompt: {prompt}")
+#     response = agent.run(prompt)  # type: ignore
 
-    if response.error:
-        rich.print(f"[red]Error:[/red] {response.error}")
-        return
+#     if response.error:
+#         rich.print(f"[red]Error:[/red] {response.error}")
+#         return
 
-    migration_data = response.data
+#     migration_data = response.data
 
-    data = generate_template(
-        template_filename="migration.sql.j2",
-        revision=migration_data,
-    )
+#     data = generate_template(
+#         template_filename="migration.sql.j2",
+#         revision=migration_data,
+#     )
 
-    with open("generated_migration.sql", "w") as f:
-        f.write(data)
+#     with open("generated_migration.sql", "w") as f:
+#         f.write(data)

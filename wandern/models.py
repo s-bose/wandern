@@ -1,6 +1,7 @@
 from typing import Literal, TypedDict
+from datetime import datetime
 from pydantic import BaseModel, Field
-from wandern.constants import DEFAULT_FILE_FORMAT
+from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE
 
 
 class Config(BaseModel):
@@ -10,7 +11,7 @@ class Config(BaseModel):
 
     # various formats
     file_format: str | None = Field(default=DEFAULT_FILE_FORMAT)
-    migration_table: str = Field(default="wd_migrations")
+    migration_table: str = Field(default=DEFAULT_MIGRATION_TABLE)
 
 
 class FileTemplateArgs(TypedDict):
@@ -37,3 +38,4 @@ class Revision(BaseModel):
     author: str | None = None
     up_sql: str | None
     down_sql: str | None
+    timestamp: datetime | None = Field(default_factory=datetime.now)

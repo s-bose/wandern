@@ -24,7 +24,7 @@ def create_model() -> Model:
             from pydantic_ai.providers.google import GoogleProvider
 
             google_provider = GoogleProvider(api_key=os.getenv("GOOGLE_API_KEY"))
-            return GoogleModel(model_name="gemini-2.0-flash", provider=google_provider)
+            return GoogleModel(model_name="gemini-2.5-flash", provider=google_provider)
         except ImportError:
             print("Please install google dependencies with `wandern[google]`")
             raise

@@ -7,7 +7,8 @@ from rich.style import Style
 import os
 from uuid import uuid4
 from datetime import datetime
-from wandern.models import Config
+from wandern.models import Config, Revision
+
 from wandern.databases.provider import get_database_impl
 from wandern.graph import MigrationGraph
 from wandern.utils import generate_migration_filename
@@ -74,7 +75,7 @@ class MigrationService:
         message: str | None,
         author: str | None = None,
         tags: list[str] | None = None,
-    ):
+    ) -> tuple[str, Revision]:
         version = uuid4().hex[:8]
         filename = generate_migration_filename(
             fmt=self.config.file_format or DEFAULT_FILE_FORMAT,
@@ -89,16 +90,26 @@ class MigrationService:
             last_revision_content.revision_id if last_revision_content else None
         )
 
+        revision = Revision(
+            revision_id=version,
+            down_revision_id=revision_id,
+            message=message or "",
+            tags=tags,
+            author=author,
+            up_sql=None,
+            down_sql=None,
+        )
         migration_body = generate_template(
-            filename="migration.sql.j2",
-            kwargs={
-                "timestamp": datetime.now().isoformat(),
-                "version": version,
-                "revises": revision_id,
-                "message": message,
-                "tags": tags,
-                "author": author,
-            },
+            template_filename="migration.sql.j2",
+            revision=Revision(
+                revision_id=version,
+                down_revision_id=revision_id,
+                message=message or "",
+                tags=tags,
+                author=author,
+                up_sql=None,
+                down_sql=None,
+            ),
         )
 
         migration_dir_abs = os.path.abspath(self.config.migration_dir)
@@ -107,46 +118,48 @@ class MigrationService:
         ) as file:
             file.write(migration_body)
 
-        return filename
+        return filename, revision
 
     def list_migrations(self):
         revisions = self.database.list_migrations()
 
-        # table = Table(title="Migrations")
+        table = Table(title="Migrations")
 
-        # table.add_column("Revision ID", style="cyan", no_wrap=True, justify="right")
-        # table.add_column("Down Revision", style="magenta", justify="right")
-        # table.add_column("Applied At", style="green", justify="right")
+        table.add_column("Revision ID", style="cyan", no_wrap=True, justify="right")
+        table.add_column("Down Revision", style="magenta", justify="right")
+        table.add_column("Applied At", style="green", justify="right")
 
-        # if revisions:
-        #     table.add_row(
-        #         f'[bright_magenta](HEAD)[/bright_magenta] {revisions[0]["revision_id"]}',
-        #         f'{revisions[0]["down_revision_id"] or "None"}',
-        #         f'{revisions[0]["created_at"].strftime("%Y-%m-%d %H:%M:%S")}',
-        #     )
-        #     for rev in revisions[1:]:
-        #         table.add_row(
-        #             rev["revision_id"],
-        #             rev["down_revision_id"] or "None",
-        #             rev["created_at"].strftime("%Y-%m-%d %H:%M:%S"),
-        #         )
-
-        tree = Tree("[green] Applied Migrations")
         if revisions:
-            # Start with the HEAD (most recent migration - first in the list)
-            head_revision = revisions[0]
-
-            # Add the HEAD node at the root
-            head_text = (
-                f"[bright_magenta](HEAD)[/bright_magenta] "
-                f'{head_revision["revision_id"]} - '
-                f'{head_revision["created_at"]}'
+            table.add_row(
+                f'[bright_magenta](HEAD)[/bright_magenta] {revisions[0]["revision_id"]}',
+                f'{revisions[0]["down_revision_id"] or "None"}',
+                f'{revisions[0]["created_at"].strftime("%Y-%m-%d %H:%M:%S")}',
             )
-            current_node = tree.add(head_text)
-
-            # Add each subsequent migration as a child of the previous one
             for rev in revisions[1:]:
-                rev_text = f'{rev["revision_id"]} - {rev["created_at"]}'
-                current_node = current_node.add(rev_text)
+                table.add_row(
+                    rev["revision_id"],
+                    rev["down_revision_id"] or "None",
+                    rev["created_at"].strftime("%Y-%m-%d %H:%M:%S"),
+                )
 
-        rich.print(tree)
+        rich.print(table)
+
+        # tree = Tree("[green] Applied Migrations")
+        # if revisions:
+        #     # Start with the HEAD (most recent migration - first in the list)
+        #     head_revision = revisions[0]
+
+        #     # Add the HEAD node at the root
+        #     head_text = (
+        #         f"[bright_magenta](HEAD)[/bright_magenta] "
+        #         f'{head_revision["revision_id"]} - '
+        #         f'{head_revision["created_at"]}'
+        #     )
+        #     current_node = tree.add(head_text)
+
+        #     # Add each subsequent migration as a child of the previous one
+        #     for rev in revisions[1:]:
+        #         rev_text = f'{rev["revision_id"]} - {rev["created_at"]}'
+        #         current_node = current_node.add(rev_text)
+
+        # rich.print(tree)

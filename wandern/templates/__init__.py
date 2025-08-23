@@ -4,6 +4,8 @@ from pathlib import Path
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
+from wandern.models import Revision
+
 
 @lru_cache
 def get_environment():
@@ -12,8 +14,8 @@ def get_environment():
     return SandboxedEnvironment(loader=loader)
 
 
-def generate_template(filename: str, kwargs: dict):
+def generate_template(template_filename: str, revision: Revision):
     env = get_environment()
-    template = env.get_template(filename)
+    template = env.get_template(template_filename)
 
-    return template.render(**kwargs)
+    return template.render(**revision.model_dump())

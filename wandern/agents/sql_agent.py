@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pydantic_ai.tools import Tool
 from wandern.models import Revision
 from .agent import BaseAgent
+from .models import MigrationAgentResponse
 
 load_dotenv()
 
@@ -20,7 +21,7 @@ You have access to the following tools:
 1. `generate_revision_id()` - Generates a unique 8 character revision ID for the migration file
 
 You are tasked with generating the necessary components for a SQL migration file as per the user prompt.
-The output of the request will be of the following format:
+The output of the request will be of type MigrationAgentResponse where the following schema is used:
 
 ```json
 class Revision(BaseModel):
@@ -31,6 +32,10 @@ class Revision(BaseModel):
     author: str | None = None
     up_sql: str | None
     down_sql: str | None
+
+class MigrationAgentResponse:
+    data: Revision
+    error: str | None = None
 ```
 
 The fields are defined as follows:
@@ -53,6 +58,8 @@ to exit immediately and report the error.
 If the user provides incomplete or ambiguous information, you are to ask clarifying questions
 to ensure you understand the request fully before proceeding.
 If the user tries to execute arbitrary code, you are to exit immediately and report the error.
+The error message should be attached to the `error` field in the response.
+The successful data should be attached to the `data` field of the response.
 """
 
 
@@ -63,7 +70,7 @@ class MigrationAgent(BaseAgent):
     ):
         super().__init__(
             SYSTEM_PROMPT,
-            Revision,
+            MigrationAgentResponse,
             max_tokens,
             tools=[Tool(function=generate_revision_id, name="generate_revision_id")],
         )

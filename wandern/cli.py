@@ -15,6 +15,8 @@ from uuid import uuid4
 from questionary import text
 from wandern.agents.sql_agent import MigrationAgent
 from wandern.templates import generate_template
+from wandern.models import Revision
+from wandern.agents.models import MigrationAgentResponse
 
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_CONFIG_FILENAME
 from wandern.models import Config
@@ -157,12 +159,17 @@ def prompt():
     agent = MigrationAgent()
     prompt = questionary.text("Prompt:").ask()
     rich.print(f"Prompt: {prompt}")
-    response = agent.run(prompt)
-    # r
+    response: MigrationAgentResponse = agent.run(prompt)  # type: ignore
+
+    if response.error:
+        rich.print(f"[red]Error:[/red] {response.error}")
+        return
+
+    migration_data = response.data
 
     data = generate_template(
-        filename="migration.sql.j2",
-        kwargs={**response.model_dump(), "timestamp": datetime.now()},
+        template_filename="migration.sql.j2",
+        revision=migration_data,
     )
 
     with open("generated_migration.sql", "w") as f:

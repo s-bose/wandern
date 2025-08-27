@@ -1,12 +1,13 @@
 from string import Formatter
 from datetime import datetime, UTC
 from pathlib import Path
+import os
+import json
 import hashlib
 import base64
-import os
+import uuid
 import rich
 import typer
-import json
 from wandern.models import FileTemplateArgs, Config
 from wandern.constants import REGEX_MIGRATION_PARSER, DEFAULT_CONFIG_FILENAME
 from wandern.models import Revision
@@ -69,7 +70,7 @@ def parse_sql_file_content(file_path: str | Path):
         group: dict[str, str] = match.groupdict()
         revision_id = group["revision_id"].strip()
         down_revision_id: str | None = group["revises"].strip()
-
+        created_at = group["timestamp"].strip()
         message = group["message"].strip()
         author = group["author"].strip() if group["author"] else None
         tags = group["tags"].strip().split(",") if group["tags"] else None
@@ -88,7 +89,12 @@ def parse_sql_file_content(file_path: str | Path):
             tags=tags,
             up_sql=up_sql,
             down_sql=down_sql,
+            created_at=datetime.fromisoformat(created_at),
         )
+
+
+def generate_revision_id():
+    return uuid.uuid4().hex[:8]
 
 
 def load_config(path: str | Path):

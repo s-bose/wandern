@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 import psycopg
 from psycopg.sql import SQL, Identifier
 from psycopg.rows import dict_row, DictRow
@@ -29,6 +30,9 @@ class PostgresMigration(DatabaseMigration):
             CREATE TABLE IF NOT EXISTS public.{table} (
                 revision_id TEXT PRIMARY KEY NOT NULL,
                 down_revision_id TEXT,
+                message VARCHAR(255),
+                tags TEXT[] DEFAULT NULL,
+                author VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT NOW()
             )
             """
@@ -45,7 +49,7 @@ class PostgresMigration(DatabaseMigration):
         with self.connect() as connection:
             connection.execute(query)
 
-    def get_head_revision(self) -> DictRow | None:
+    def get_head_revision(self) -> Revision | None:
         query = SQL(
             """
             SELECT * FROM public.{table}
@@ -55,13 +59,23 @@ class PostgresMigration(DatabaseMigration):
 
         with self.connect() as connection:
             result = connection.execute(query)
-            return result.fetchone()
+            row = result.fetchone()
+            if not row:
+                return None
+            return Revision(**row)
 
     def migrate_up(self, revision: Revision):
         query = SQL(
             """
             INSERT INTO public.{table}
-                VALUES (%(revision_id)s, %(down_revision_id)s, %(timestamp)s)
+                VALUES (
+                    %(revision_id)s,
+                    %(down_revision_id)s,
+                    %(message)s,
+                    %(tags)s,
+                    %(author)s,
+                    %(created_at)s
+                )
             """
         ).format(table=Identifier(self.config.migration_table))
 
@@ -69,16 +83,21 @@ class PostgresMigration(DatabaseMigration):
             with connection.transaction():  # Begin transaction
                 connection.execute(revision.up_sql or "")
 
-                connection.execute(
+                result = connection.execute(
                     query,
                     params={
                         "revision_id": revision.revision_id,
                         "down_revision_id": revision.down_revision_id,
-                        "timestamp": datetime.now(),
+                        "message": revision.message,
+                        "tags": revision.tags,
+                        "author": revision.author,
+                        "created_at": datetime.now(),
                     },
                 )
 
-    def migrate_down(self, revision: Revision) -> None:
+                return result.rowcount
+
+    def migrate_down(self, revision: Revision) -> int:
         query = SQL(
             """
             DELETE FROM public.{table}
@@ -90,19 +109,60 @@ class PostgresMigration(DatabaseMigration):
             with connection.transaction():  # BEGIN
                 connection.execute(revision.down_sql or "")
 
-                connection.execute(
+                result = connection.execute(
                     query,
                     params={"revision_id": revision.revision_id},
                 )
 
-    def list_migrations(self):
+                return result.rowcount
+
+    def list_migrations(
+        self,
+        author: str | None = None,
+        tags: list[str] | None = None,
+        created_at: datetime | None = None,
+    ) -> list[Revision]:
+
+        base_query = """
+            SELECT * FROM public.{table}
+        """
+
+        where_clause = []
+
+        params: dict[str, Any] = {}
+        if author:
+            where_clause.append("author = %(author)s")
+            params["author"] = author
+        if tags:
+            where_clause.append("tags && %(tags)s")
+            params["tags"] = tags
+        if created_at:
+            where_clause.append("created_at >= %(created_at)s")
+            params["created_at"] = created_at
+
+        if where_clause:
+            base_query += f" WHERE {' AND '.join(where_clause)}"
+        base_query += " ORDER BY created_at DESC"
+
+        query = SQL(base_query).format(table=Identifier(self.config.migration_table))
+
+        with self.connect() as connection:
+            result = connection.execute(query, params=params)
+            rows = result.fetchall()
+
+            return [Revision(**row) for row in rows]
+
+    def get_migration(self, revision_id: str) -> Revision | None:
         query = SQL(
             """
             SELECT * FROM public.{table}
-            ORDER BY created_at DESC
+            WHERE revision_id = %(revision_id)s
             """
         ).format(table=Identifier(self.config.migration_table))
 
         with self.connect() as connection:
-            result = connection.execute(query)
-            return result.fetchall()
+            result = connection.execute(query, params={"revision_id": revision_id})
+            row = result.fetchone()
+            if not row:
+                return None
+            return Revision(**row)

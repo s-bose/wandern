@@ -1,26 +1,14 @@
-from typing import Annotated, Optional
+from typing import Annotated
 import json
 import os
-import questionary
 import typer
 import rich
-from rich.tree import Tree
-from rich.panel import Panel
-from rich.console import Console
 from pathlib import Path
-from rich.panel import Panel
-from datetime import datetime
-from uuid import uuid4
-from questionary import text
 from wandern.agents.sql_agent import MigrationAgent
-from wandern.templates.engine import generate_template
-from wandern.models import Revision
-from wandern.agents.models import MigrationAgentResponse
 
-from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_CONFIG_FILENAME
+from wandern.constants import DEFAULT_CONFIG_FILENAME
 from wandern.models import Config
-from wandern.utils import load_config, save_config
-from wandern.databases.postgresql import PostgresMigration
+from wandern.utils import load_config
 from wandern.migration import MigrationService
 from wandern import commands
 
@@ -205,3 +193,27 @@ def tree():
 
 #     with open("generated_migration.sql", "w") as f:
 #         f.write(data)
+
+
+@app.command()
+def browse():
+    """Interactive browser for migrations with search and filtering.
+
+    Allows you to:
+    - Search migrations by text (revision ID, message, author, tags)
+    - Filter by author
+    - Filter by one or more tags
+    - Filter by creation date
+    - View migrations in a live, interactive table
+    """
+    config = load_config(config_path)
+    service = MigrationService(config)
+    service.interactive_migrations_browser()
+
+
+@app.command()
+def table():
+    """Alias for 'browse' command - interactive migrations browser."""
+    config = load_config(config_path)
+    service = MigrationService(config)
+    service.interactive_migrations_browser()

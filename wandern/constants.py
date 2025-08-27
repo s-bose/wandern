@@ -12,8 +12,8 @@ REGEX_MIGRATION_PARSER: Pattern = re.compile(
     .*?Revision\s+ID:\s*(?P<revision_id>\w+)        # Revision ID
     .*?Revises:\s*(?P<revises>\w+)                  # Revises
     .*?Message:\s*(?P<message>[^\n]+)               # Message
-    (?:.*?Tags:\s*(?P<tags>[^\n]+))?                # Optional Tags
     (?:.*?Author:\s*(?P<author>[^\n]+))?            # Optional Author
+    (?:.*?Tags:\s*(?P<tags>[^\n]+))?                # Optional Tags
     .*?\*/                                          # End of comment
     \s*                                             # Optional whitespace
     --\s*UP\s*\n                                   # UP section header

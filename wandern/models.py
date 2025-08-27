@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import TypedDict, Annotated, Literal
 from datetime import datetime
 from pydantic import BaseModel, Field
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE
@@ -31,11 +31,38 @@ class FileTemplateArgs(TypedDict):
 
 
 class Revision(BaseModel):
-    revision_id: str
-    down_revision_id: str | None
-    message: str
-    tags: list[str] | None = []
-    author: str | None = None
-    up_sql: str | None
-    down_sql: str | None
-    timestamp: datetime | None = Field(default_factory=datetime.now)
+    revision_id: Annotated[
+        str, Field(description="The unique identifier for the revision")
+    ]
+    down_revision_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "The identifier of the previous revision, if any, "
+                "null if this is the first revision"
+            )
+        ),
+    ]
+    message: Annotated[
+        str, Field(description="Brief description of what the revision is about")
+    ]
+    tags: Annotated[
+        list[str] | None,
+        Field(default=[], description="List of tags associated with the revision"),
+    ]
+    author: Annotated[str | None, Field(description="The author of the revision")] = (
+        None
+    )
+    up_sql: Annotated[
+        str | None, Field(description="The SQL to apply the revision")
+    ] = None
+    down_sql: Annotated[
+        str | None, Field(description="The SQL to revert the revision")
+    ] = None
+    created_at: Annotated[
+        datetime,
+        Field(
+            default_factory=datetime.now,
+            description="Time when the revision was created",
+        ),
+    ]

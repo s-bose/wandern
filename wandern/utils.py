@@ -97,6 +97,26 @@ def generate_revision_id():
     return uuid.uuid4().hex[:8]
 
 
+def create_empty_migration(
+    message: str | None,
+    down_revision_id: str | None,
+    author: str | None = None,
+    tags: list[str] | None = None,
+):
+    version = generate_revision_id()
+
+    return Revision(
+        revision_id=version,
+        down_revision_id=down_revision_id,
+        message=message or "",
+        tags=tags,
+        author=author,
+        up_sql=None,
+        down_sql=None,
+        created_at=datetime.now(),
+    )
+
+
 def load_config(path: str | Path):
     config_dir = os.path.abspath(path)
     if not os.access(config_dir, os.F_OK):

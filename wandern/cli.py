@@ -1,16 +1,15 @@
 from typing import Annotated
+from pathlib import Path
 import json
 import os
 import typer
 import rich
-from pathlib import Path
-from wandern.agents.sql_agent import MigrationAgent
 
+from wandern import _cli as commands
 from wandern.constants import DEFAULT_CONFIG_FILENAME
-from wandern.models import Config
+from wandern.models import Config, DatabaseProviders
 from wandern.utils import load_config
 from wandern.migration import MigrationService
-from wandern import commands
 
 app = typer.Typer(rich_markup_mode="rich")
 config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME
@@ -32,12 +31,27 @@ def init(
             help="Path to the directory to contain the migration scripts",
         ),
     ] = None,
+    dialect: Annotated[
+        DatabaseProviders,
+        typer.Option(
+            "--dialect",
+            "-d",
+            help="Database dialect to use",
+        ),
+    ] = DatabaseProviders.POSTGRESQL,
 ):
-    commands.init(interactive=interactive, directory=directory)
+    if os.access(config_path, os.F_OK):
+        rich.print("[red]Wandern config already exists in the current directory[/red]")
+        raise typer.Exit(code=1)
+
+    if interactive:
+        commands.init_interactive(config_path)
+    else:
+        commands.init(config_path, dialect, directory)
 
 
-@app.command()
-def generate(
+@app.command(name="generate")
+def generate_migration(
     message: Annotated[
         str | None,
         typer.Option(
@@ -48,7 +62,19 @@ def generate(
     ] = None,
     author: Annotated[
         str | None,
-        typer.Option(help="Optional author of the migration (default: system user)"),
+        typer.Option(
+            "--author",
+            "-a",
+            help="Optional author of the migration (default: system user)",
+        ),
+    ] = None,
+    tags: Annotated[
+        str | None,
+        typer.Option(
+            "--tags",
+            "-t",
+            help="Comma-separated list of tags for the migration",
+        ),
     ] = None,
     prompt: Annotated[
         bool,
@@ -60,39 +86,11 @@ def generate(
     ] = False,
 ):
     config = load_config(config_path)
-    migration_service = MigrationService(config)
-
-    last_migration = migration_service.graph.get_last_migration()
-    down_revision_id = last_migration.revision_id if last_migration else None
-
-    past_revisions = list(migration_service.graph.iter())
-
-    if prompt:
-        agent = MigrationAgent(
-            down_revision_id=down_revision_id, past_revisions=past_revisions
-        )
-        prompt_text = typer.prompt("Describe the migration")
-        show_usage = typer.confirm("Show usage", prompt_suffix="?")
-
-        response = agent.run(prompt_text, usage=show_usage)
-        if response.error:
-            rich.print(f"[red]Error:[/red] {response.error}")
-            raise typer.Exit(code=1)
-
-        # revision = response.data
-
-        rich.print(f"> [green][italic]{response.message}[/italic][/green]")
-
+    tags_list = tags.split(", ") if tags else []
+    if not prompt:
+        commands.generate(config=config, message=message, author=author, tags=tags_list)
     else:
-        revision = migration_service.create_empty_migration(
-            message=message, author=author, down_revision_id=down_revision_id
-        )
-
-    # filename = migration_service.save_migration(revision)
-    # rich.print(
-    #     f"[green]Generated migration file: {filename} for revision:[/green]"
-    #     f" [yellow]{revision.revision_id}[/yellow]"
-    # )
+        commands.generate_from_prompt(config=config, author=author, tags=tags_list)
 
 
 @app.command()
@@ -101,6 +99,22 @@ def upgrade(
         int | None,
         typer.Option(
             help="Number of migration steps to apply (default: all)",
+        ),
+    ] = None,
+    tags: Annotated[
+        str | None,
+        typer.Option(
+            "--tags",
+            "-t",
+            help="Comma-separated list of tags for the migration",
+        ),
+    ] = None,
+    author: Annotated[
+        str | None,
+        typer.Option(
+            "--author",
+            "-a",
+            help="Optional author of the migration (default: system user)",
         ),
     ] = None,
 ):
@@ -138,16 +152,6 @@ def downgrade(
 
 
 @app.command()
-def view():
-    """View the currently applied migrations in db"""
-
-    config = load_config(config_path)
-
-    migration_service = MigrationService(config)
-    migration_service.list_migrations()
-
-
-@app.command()
 def reset():
     """Reset all migrations.
     Rolls back all the migrations till now
@@ -162,15 +166,6 @@ def deinit():
     DOES NOT undo the migrations. Use `reset` for that.
     """
     pass
-
-
-@app.command()
-def tree():
-    """Visualize migration sequence as a tree"""
-
-    config = load_config(config_path)
-    migration_service = MigrationService(config)
-    migration_service.list_migrations()
 
 
 # @app.command()
@@ -206,14 +201,6 @@ def browse():
     - Filter by creation date
     - View migrations in a live, interactive table
     """
-    config = load_config(config_path)
-    service = MigrationService(config)
-    service.interactive_migrations_browser()
-
-
-@app.command()
-def table():
-    """Alias for 'browse' command - interactive migrations browser."""
     config = load_config(config_path)
     service = MigrationService(config)
     service.interactive_migrations_browser()

@@ -7,7 +7,7 @@ from jinja2.sandbox import SandboxedEnvironment
 
 from wandern.models import Revision
 
-type TemplateFile = Literal["migration.sql.j2"]
+TemplateFile = Literal["migration.sql.j2"]
 
 
 @lru_cache

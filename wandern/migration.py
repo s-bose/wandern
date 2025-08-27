@@ -8,7 +8,7 @@ from wandern.models import Config, Revision
 
 from wandern.databases.provider import get_database_impl
 from wandern.graph import MigrationGraph
-from wandern.utils import generate_migration_filename
+from wandern.utils import generate_migration_filename, generate_revision_id
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.templates.engine import generate_template
 
@@ -68,26 +68,6 @@ class MigrationService:
             )
             current = self.graph.get_node(current.down_revision_id)
             count += 1
-
-    def create_empty_migration(
-        self,
-        message: str | None,
-        down_revision_id: str | None,
-        author: str | None = None,
-        tags: list[str] | None = None,
-    ) -> Revision:
-        version = uuid4().hex[:8]
-
-        return Revision(
-            revision_id=version,
-            down_revision_id=down_revision_id,
-            message=message or "",
-            tags=tags,
-            author=author,
-            up_sql=None,
-            down_sql=None,
-            created_at=datetime.now(),
-        )
 
     def save_migration(self, revision: Revision):
         filename = generate_migration_filename(

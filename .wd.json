@@ -1,5 +1,7 @@
 {
     "dialect": "postgresql",
     "dsn": "postgresql://wandern:password@localhost:6432/wd",
-    "migration_dir": "wd_migrations"
+    "file_format": "{version}_{slug}_{message}",
+    "migration_dir": "/Users/shiladitya/Projects/wandern/wd_migrations",
+    "migration_table": "wd_migrations"
 }

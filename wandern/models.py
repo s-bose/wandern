@@ -1,11 +1,19 @@
 from typing import TypedDict, Annotated, Literal
+from enum import StrEnum
 from datetime import datetime
 from pydantic import BaseModel, Field
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE
 
 
+class DatabaseProviders(StrEnum):
+    POSTGRESQL = "postgresql"
+    SQLITE = "sqlite"
+    MYSQL = "mysql"  # FUTURE: not implemented
+    MSSQL = "mssql"  # FUTURE: not implemented
+
+
 class Config(BaseModel):
-    dialect: Literal["postgresql"]
+    dialect: DatabaseProviders
     dsn: str
     migration_dir: str
 

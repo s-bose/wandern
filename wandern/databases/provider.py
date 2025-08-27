@@ -1,14 +1,6 @@
-from enum import StrEnum
 from wandern.databases.postgresql import PostgresMigration
 from wandern.databases.sqlite import SQLiteMigration
-from wandern.models import Config
-
-
-class DatabaseProviders(StrEnum):
-    POSTGRESQL = "postgresql"
-    SQLITE = "sqlite"
-    MYSQL = "mysql"  # FUTURE: not implemented
-    MSSQL = "mssql"  # FUTURE: not implemented
+from wandern.models import DatabaseProviders, Config
 
 
 def get_database_impl(provider: DatabaseProviders | str, config: Config):

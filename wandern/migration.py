@@ -2,13 +2,12 @@ import rich
 from rich.console import Console
 from rich.table import Table
 import os
-from uuid import uuid4
 from datetime import datetime
 from wandern.models import Config, Revision
 
 from wandern.databases.provider import get_database_impl
 from wandern.graph import MigrationGraph
-from wandern.utils import generate_migration_filename, generate_revision_id
+from wandern.utils import generate_migration_filename
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.templates.engine import generate_template
 

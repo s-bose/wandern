@@ -9,7 +9,15 @@ import uuid
 import rich
 import typer
 from wandern.models import FileTemplateArgs, Config
-from wandern.constants import REGEX_MIGRATION_PARSER, DEFAULT_CONFIG_FILENAME
+from wandern.constants import (
+    REGEX_MIGRATION_PARSER,
+    REGEX_TIMESTAMP,
+    REGEX_REVISION_ID,
+    REGEX_REVISES,
+    REGEX_MESSAGE,
+    REGEX_AUTHOR,
+    REGEX_TAGS,
+)
 from wandern.models import Revision
 
 
@@ -68,14 +76,35 @@ def parse_sql_file_content(file_path: str | Path) -> Revision:
             raise ValueError("Invalid migration file format")
 
         group: dict[str, str] = match.groupdict()
-        revision_id = group["revision_id"].strip()
-        down_revision_id: str | None = group["revises"].strip()
-        created_at = group["timestamp"].strip()
-        message = group["message"].strip()
-        author = group["author"].strip() if group["author"] else None
-        tags = group["tags"].strip().split(",") if group["tags"] else None
+        comment_block = group["comment_block"]
         up_sql = group["up_sql"].strip()
         down_sql = group["down_sql"].strip()
+
+        # Extract individual fields from comment block
+        timestamp_match = REGEX_TIMESTAMP.search(comment_block)
+        revision_id_match = REGEX_REVISION_ID.search(comment_block)
+        revises_match = REGEX_REVISES.search(comment_block)
+        message_match = REGEX_MESSAGE.search(comment_block)
+        author_match = REGEX_AUTHOR.search(comment_block)
+        tags_match = REGEX_TAGS.search(comment_block)
+
+        # Validate required fields
+        if not timestamp_match:
+            raise ValueError("Timestamp field is required in migration file")
+        if not revision_id_match:
+            raise ValueError("Revision ID field is required in migration file")
+        if not revises_match:
+            raise ValueError("Revises field is required in migration file")
+        if not message_match:
+            raise ValueError("Message field is required in migration file")
+
+        # Extract field values
+        revision_id = revision_id_match.group("revision_id").strip()
+        down_revision_id: str | None = revises_match.group("revises").strip()
+        created_at = timestamp_match.group("timestamp").strip()
+        message = message_match.group("message").strip()
+        author = author_match.group("author").strip() if author_match else None
+        tags = tags_match.group("tags").strip().split(",") if tags_match else None
 
         return Revision(
             revision_id=revision_id,

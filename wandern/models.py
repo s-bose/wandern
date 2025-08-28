@@ -1,7 +1,8 @@
-from typing import TypedDict, Annotated, Literal
+from typing import TypedDict, Annotated
 from enum import StrEnum
 from datetime import datetime
 from pydantic import BaseModel, Field
+
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE
 
 
@@ -13,13 +14,17 @@ class DatabaseProviders(StrEnum):
 
 
 class Config(BaseModel):
-    dialect: DatabaseProviders
     dsn: str
     migration_dir: str
 
     # various formats
     file_format: str | None = Field(default=DEFAULT_FILE_FORMAT)
     migration_table: str = Field(default=DEFAULT_MIGRATION_TABLE)
+
+    @property
+    def dialect(self):
+        _dialect = self.dsn.split("://")[0]
+        return DatabaseProviders(_dialect)
 
 
 class FileTemplateArgs(TypedDict):

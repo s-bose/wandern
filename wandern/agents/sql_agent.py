@@ -142,24 +142,8 @@ class MigrationAgent(BaseAgent[MigrationSQL, str]):
             additional_context=self.generate_additional_context(),
         )
 
-        # print(f"{custom_prompt}\n\n")
-
         response = super().run(
             custom_prompt,
         )
 
         return response
-        # if response.error:
-        #     rich.print(f"[red]Error:[/red] {response.error}")
-        #     raise typer.Exit(code=1)
-
-        # return Revision(
-        #     revision_id=generate_revision_id(),
-        #     down_revision_id=down_revision_id,
-        #     up_sql=response.data.up_sql,
-        #     down_sql=response.data.down_sql,
-        #     message=response.data.message or "",
-        #     tags=tags,
-        #     author=author or "agent",
-        #     created_at=datetime.now(),
-        # )

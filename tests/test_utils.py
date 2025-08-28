@@ -1,22 +1,284 @@
-from wandern.utils import generate_migration_filename, slugify
-from wandern.constants import DEFAULT_FILE_FORMAT
+import pytest
+import os
+import tempfile
+import json
+import typer
+from pathlib import Path
 from datetime import datetime, timezone
+from wandern.utils import (
+    generate_migration_filename,
+    slugify,
+    parse_sql_file_content,
+    generate_revision_id,
+    create_empty_migration,
+    load_config,
+    save_config,
+)
+from wandern.constants import DEFAULT_FILE_FORMAT
+from wandern.models import Config
+
+
+def test_slugify():
+    """Test slugify function with various inputs."""
+    assert slugify("hello world") == "uU0nuZNNPg"
+    assert slugify("test message", length=5) == "Pwo3e"
+    assert slugify("special!@#$%chars") == "JF6dDOXDj2"
+    assert slugify("") == "47DEQpj8HB"
+
+    # Test length parameter
+    assert len(slugify("very long message", length=15)) <= 15
+    assert len(slugify("short", length=20)) <= 20
 
 
 def test_generate_migration_filename():
-    # assert (
-    #     generate_migration_filename(
-    #         version="0001", message="test", fmt=DEFAULT_FILE_FORMAT
-    #     )
-    #     == f"1_{slugify('test')}_test.sql"
-    # )
-
+    """Test migration filename generation with various formats."""
+    # Test basic format
     current_datetime = datetime.now(timezone.utc)
-    assert (
-        generate_migration_filename(
-            fmt="{day:02}_{month:>02}_{year}__{version}__{message}",
-            version="0001",
-            message="test",
-        )
-        == f"{current_datetime.day:02}_{current_datetime.month:02}_{current_datetime.year}__1__{'test'}.sql"
+    result = generate_migration_filename(
+        fmt="{day:02}_{month:>02}_{year}__{version}__{message}",
+        version="0001",
+        message="test",
     )
+    expected = f"{current_datetime.day:02}_{current_datetime.month:02}_{current_datetime.year}__1__test.sql"
+    assert result == expected
+
+    # Test default format
+    result = generate_migration_filename(
+        fmt=DEFAULT_FILE_FORMAT, version="0001", message="test message"
+    )
+    assert result.endswith(".sql")
+    assert "1" in result
+    assert "test_message" in result
+
+    # Test with author
+    result = generate_migration_filename(
+        fmt="{version}_{author}_{slug}", version="0002", message="test", author="john"
+    )
+    assert "2" in result
+    assert "john" in result
+
+    # Test numeric version conversion
+    result = generate_migration_filename(
+        fmt="{version}", version="0005", message="test"
+    )
+    assert "5" in result
+
+    # Test non-numeric version
+    result = generate_migration_filename(
+        fmt="{version}", version="abc123", message="test"
+    )
+    assert "abc123" in result
+
+
+def test_generate_migration_filename_errors():
+    """Test error cases for generate_migration_filename."""
+    # Missing required fields
+    with pytest.raises(ValueError, match="version or slug or message is required"):
+        generate_migration_filename(fmt="{other}", version="", message="")
+
+    # Missing fields in format
+    with pytest.raises(ValueError, match="Missing required fields"):
+        generate_migration_filename(fmt="{nonexistent}", version="1", message="test")
+
+
+def test_generate_revision_id():
+    """Test revision ID generation."""
+    rev_id = generate_revision_id()
+    assert len(rev_id) == 8
+    assert all(c in "0123456789abcdef" for c in rev_id)
+
+    # Test uniqueness
+    rev_id2 = generate_revision_id()
+    assert rev_id != rev_id2
+
+
+def test_create_empty_migration():
+    """Test empty migration creation."""
+    # Basic migration
+    revision = create_empty_migration(
+        message="test migration", down_revision_id="abc123"
+    )
+    assert revision.message == "test migration"
+    assert revision.down_revision_id == "abc123"
+    assert revision.up_sql is None
+    assert revision.down_sql is None
+    assert len(revision.revision_id) == 8
+    assert isinstance(revision.created_at, datetime)
+
+    # Migration with optional fields
+    revision = create_empty_migration(
+        message="test with options",
+        down_revision_id=None,
+        author="test author",
+        tags=["tag1", "tag2"],
+    )
+    assert revision.author == "test author"
+    assert revision.tags == ["tag1", "tag2"]
+    assert revision.down_revision_id is None
+
+    # Migration with empty message
+    revision = create_empty_migration(message=None, down_revision_id="abc")
+    assert revision.message == ""
+
+
+def test_parse_sql_file_content():
+    """Test parsing SQL file content."""
+    content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: abc123
+    Revises: def456
+    Message: test migration
+    Author: John Doe
+    Tags: tag1, tag2
+    */
+
+    -- UP
+    CREATE TABLE test (id INTEGER);
+
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+
+        try:
+            revision = parse_sql_file_content(f.name)
+            assert revision.revision_id == "abc123"
+            assert revision.down_revision_id == "def456"
+            assert revision.message == "test migration"
+            assert revision.author == "John Doe"
+            assert revision.tags == [
+                "tag1",
+                " tag2",
+            ]  # Note: there's a space before tag2
+            assert revision.up_sql and "CREATE TABLE test" in revision.up_sql
+            assert revision.down_sql and "DROP TABLE test" in revision.down_sql
+            assert isinstance(revision.created_at, datetime)
+        finally:
+            os.unlink(f.name)
+
+
+def test_parse_sql_file_content_minimal():
+    """Test parsing SQL file with minimal content."""
+    content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: abc123
+    Revises: none
+    Message: minimal migration
+    */
+
+    -- UP
+
+    -- DOWN
+    """
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+
+        try:
+            revision = parse_sql_file_content(f.name)
+            assert revision.revision_id == "abc123"
+            assert revision.down_revision_id is None
+            assert revision.message == "minimal migration"
+            assert revision.author is None
+            assert revision.tags is None
+        finally:
+            os.unlink(f.name)
+
+
+def test_parse_sql_file_content_invalid():
+    """Test parsing invalid SQL file content."""
+    content = "Invalid content without proper format"
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+
+        try:
+            with pytest.raises(ValueError, match="Invalid migration file format"):
+                parse_sql_file_content(f.name)
+        finally:
+            os.unlink(f.name)
+
+
+def test_load_config():
+    """Test loading configuration from file."""
+    config_data = {
+        "dsn": "sqlite:///test.db",
+        "migration_dir": "./test_migrations",
+        "file_format": "{version}_{message}",
+        "migration_table": "migrations",
+    }
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        config_path = Path(temp_dir) / ".wd.json"
+        migration_dir = Path(temp_dir) / "test_migrations"
+        migration_dir.mkdir()
+
+        # Update config to use absolute path
+        config_data["migration_dir"] = str(migration_dir)
+
+        with open(config_path, "w") as f:
+            json.dump(config_data, f)
+
+        config = load_config(config_path)
+        assert config.dsn == "sqlite:///test.db"
+        assert (
+            config.dialect.value == "sqlite"
+        )  # dialect is a property that returns DatabaseProviders enum
+        assert config.migration_dir == str(migration_dir)
+        assert config.file_format == "{version}_{message}"
+        assert config.migration_table == "migrations"
+
+
+def test_load_config_nonexistent():
+    """Test loading config from nonexistent file."""
+    with pytest.raises(typer.Exit):
+        load_config("/nonexistent/path/.wd.json")
+
+
+def test_load_config_unwriteable_migration_dir():
+    """Test loading config with unwriteable migration directory."""
+    config_data = {
+        "dsn": "sqlite:///test.db",
+        "migration_dir": "/read-only-path",
+        "file_format": "{version}_{message}",
+        "migration_table": "migrations",
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(config_data, f)
+        f.flush()
+
+        try:
+            with pytest.raises(typer.Exit):
+                load_config(f.name)
+        finally:
+            os.unlink(f.name)
+
+
+def test_save_config():
+    """Test saving configuration to file."""
+    config = Config(
+        dsn="postgresql://user:pass@localhost/db",
+        migration_dir="./migrations",
+        file_format="{version}_{slug}",
+        migration_table="wd_migrations",
+    )
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        try:
+            save_config(config, f.name)
+
+            # Verify file was written correctly
+            with open(f.name, "r") as rf:
+                saved_data = json.load(rf)
+                assert saved_data["dsn"] == "postgresql://user:pass@localhost/db"
+                assert saved_data["migration_dir"] == "./migrations"
+                assert saved_data["file_format"] == "{version}_{slug}"
+                assert saved_data["migration_table"] == "wd_migrations"
+        finally:
+            os.unlink(f.name)

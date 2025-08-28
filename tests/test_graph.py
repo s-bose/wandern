@@ -101,3 +101,119 @@ def test_iter_from():
     # Check that the revisions are in the expected order
     expected_ids = {"0004", "0005"}
     assert {rev.revision_id for rev in revisions} == expected_ids
+
+
+def test_iter_from_invalid_revision():
+    """Test iter_from with non-existent revision ID."""
+    migration_dir = "tests/migrations"
+    graph = MigrationGraph.build(migration_dir)
+
+    with pytest.raises(
+        ValueError, match="Revision: nonexistent does not exist in the graph"
+    ):
+        list(graph.iter_from("nonexistent"))
+
+
+def test_get_node():
+    """Test getting a specific node from the graph."""
+    migration_dir = "tests/migrations"
+    graph = MigrationGraph.build(migration_dir)
+
+    # Test existing node
+    revision = graph.get_node("0003")
+    assert revision is not None
+    assert revision.revision_id == "0003"
+    assert isinstance(revision, Revision)
+
+    # Test non-existent node
+    revision = graph.get_node("nonexistent")
+    assert revision is None
+
+
+def test_first_property():
+    """Test the first property returns the root node."""
+    migration_dir = "tests/migrations"
+    graph = MigrationGraph.build(migration_dir)
+
+    first_id = graph.first
+    assert first_id == "0001"
+
+
+def test_first_property_empty_graph():
+    """Test first property with empty graph."""
+    empty_graph = nx.DiGraph()
+    migration_graph = MigrationGraph(empty_graph)
+
+    assert migration_graph.first is None
+
+
+def test_get_last_migration_single_node():
+    """Test get_last_migration with a single node graph."""
+    dg = nx.DiGraph()
+    dg.add_node("single", revision_id="single", down_revision_id=None, message="test")
+
+    migration_graph = MigrationGraph(dg)
+    last = migration_graph.get_last_migration()
+
+    assert last is not None
+    assert last.revision_id == "single"
+
+
+def test_get_last_migration_empty_graph():
+    """Test get_last_migration with empty graph."""
+    empty_graph = nx.DiGraph()
+    migration_graph = MigrationGraph(empty_graph)
+
+    last = migration_graph.get_last_migration()
+    assert last is None
+
+
+def test_iter_empty_graph():
+    """Test iter with empty graph."""
+    empty_graph = nx.DiGraph()
+    migration_graph = MigrationGraph(empty_graph)
+
+    revisions = list(migration_graph.iter())
+    assert revisions == []
+
+
+def test_iter_single_node():
+    """Test iter with single node graph."""
+    dg = nx.DiGraph()
+    dg.add_node(
+        "single",
+        revision_id="single",
+        down_revision_id=None,
+        message="test",
+        author=None,
+        tags=None,
+        up_sql="",
+        down_sql="",
+        created_at="2024-01-01T00:00:00",
+    )
+
+    migration_graph = MigrationGraph(dg)
+    revisions = list(migration_graph.iter())
+
+    assert len(revisions) == 1
+    assert revisions[0].revision_id == "single"
+
+
+def test_check_divergence_no_divergence():
+    """Test check_divergence with valid linear graph."""
+    dg = nx.DiGraph()
+    dg.add_edge("a", "b")
+    dg.add_edge("b", "c")
+
+    # Should not raise any exception
+    MigrationGraph.check_divergence(dg)
+
+
+def test_check_cycles_no_cycles():
+    """Test check_cycles returns None when no cycles exist."""
+    dg = nx.DiGraph()
+    dg.add_edge("a", "b")
+    dg.add_edge("b", "c")
+
+    result = MigrationGraph.check_cycles(dg)
+    assert result is None

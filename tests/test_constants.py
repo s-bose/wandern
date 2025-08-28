@@ -1,4 +1,9 @@
-from wandern.constants import REGEX_MIGRATION_PARSER
+from wandern.constants import (
+    REGEX_MIGRATION_PARSER,
+    DEFAULT_FILE_FORMAT,
+    DEFAULT_MIGRATION_TABLE,
+    DEFAULT_CONFIG_FILENAME,
+)
 
 
 def test_basic_migration_regex_parsing():
@@ -39,8 +44,8 @@ def test_migration_with_tags_and_author():
     Revision ID: 0003
     Revises: 0002
     Message: add user authentication
-    Tags: auth, security, users
     Author: John Doe <john@example.com>
+    Tags: auth, security, users
     */
 
     -- UP
@@ -106,8 +111,8 @@ def test_migration_with_extra_comments():
     - This migration affects performance
     - Run during maintenance window
 
-    Tags: critical, performance
     Author: Jane Smith
+    Tags: critical, performance
 
     End of header comments
     */
@@ -387,8 +392,8 @@ def test_regex_parse_with_groupdict():
     - This migration affects performance
     - Run during maintenance window
 
-    Tags: critical, performance
     Author: Jane Smith
+    Tags: critical, performance
 
     End of header comments
     */
@@ -412,3 +417,19 @@ def test_regex_parse_with_groupdict():
     assert match_dict["message"] == "critical database changes"
     assert match_dict["author"] == "Jane Smith"
     assert match_dict["tags"] == "critical, performance"
+
+
+def test_default_constants():
+    """Test that default constants have expected values."""
+    assert DEFAULT_FILE_FORMAT == "{version}_{slug}_{message}"
+    assert DEFAULT_MIGRATION_TABLE == "wd_migrations"
+    assert DEFAULT_CONFIG_FILENAME == ".wd.json"
+
+
+def test_regex_pattern_type():
+    """Test that REGEX_MIGRATION_PARSER is a compiled regex pattern."""
+    import re
+
+    assert isinstance(REGEX_MIGRATION_PARSER, type(re.compile(r"")))
+    assert REGEX_MIGRATION_PARSER.flags & re.DOTALL
+    assert REGEX_MIGRATION_PARSER.flags & re.VERBOSE

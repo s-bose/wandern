@@ -81,7 +81,8 @@ class PostgresMigration(DatabaseMigration):
 
         with self.connect() as connection:
             with connection.transaction():  # Begin transaction
-                connection.execute(revision.up_sql or "")
+                if revision.up_sql:
+                    connection.execute(revision.up_sql)  # type: ignore
 
                 result = connection.execute(
                     query,
@@ -107,7 +108,8 @@ class PostgresMigration(DatabaseMigration):
 
         with self.connect() as connection:
             with connection.transaction():  # BEGIN
-                connection.execute(revision.down_sql or "")
+                if revision.down_sql:
+                    connection.execute(revision.down_sql)  # type: ignore
 
                 result = connection.execute(
                     query,
@@ -122,7 +124,6 @@ class PostgresMigration(DatabaseMigration):
         tags: list[str] | None = None,
         created_at: datetime | None = None,
     ) -> list[Revision]:
-
         base_query = """
             SELECT * FROM public.{table}
         """
@@ -151,18 +152,3 @@ class PostgresMigration(DatabaseMigration):
             rows = result.fetchall()
 
             return [Revision(**row) for row in rows]
-
-    def get_migration(self, revision_id: str) -> Revision | None:
-        query = SQL(
-            """
-            SELECT * FROM public.{table}
-            WHERE revision_id = %(revision_id)s
-            """
-        ).format(table=Identifier(self.config.migration_table))
-
-        with self.connect() as connection:
-            result = connection.execute(query, params={"revision_id": revision_id})
-            row = result.fetchone()
-            if not row:
-                return None
-            return Revision(**row)

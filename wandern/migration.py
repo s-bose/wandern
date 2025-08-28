@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import Literal
 import rich
 
 from wandern.models import Config, Revision
@@ -34,11 +35,18 @@ class MigrationService:
             revisions = list(self.graph.iter_from(head.revision_id))
 
         if author is not None:
-            revisions = [rev for rev in revisions if rev.author == author]
-        if tags is not None and len(tags) > 0:
-            revisions = [
+            filtered_revisions = [rev for rev in revisions if rev.author == author]
+        elif tags is not None and len(tags) > 0:
+            filtered_revisions = [
                 rev for rev in revisions if rev.tags and set(rev.tags) & set(tags)
             ]
+        else:
+            filtered_revisions = revisions
+
+        # Validate that filtered revisions form a continuous chain
+        if author is not None or tags:
+            self._validate_sequential_path(filtered_revisions, head)
+            revisions = filtered_revisions
 
         for revision in revisions:
             self.database.migrate_up(revision)
@@ -48,6 +56,29 @@ class MigrationService:
             count += 1
             if steps and count == steps:
                 break
+
+    def _validate_sequential_path(
+        self, filtered_revisions: list[Revision], head: Revision | None
+    ):
+        if not filtered_revisions:
+            return
+
+        expected_down_revision_id = head.revision_id if head else None
+
+        for i, revision in enumerate(filtered_revisions):
+            if revision.down_revision_id != expected_down_revision_id:
+                if i == 0:
+                    raise ValueError(
+                        f"Cannot apply migration '{revision.revision_id}' - it depends on "
+                        f"'{revision.down_revision_id}' but current head is '{expected_down_revision_id}'"
+                    )
+                else:
+                    raise ValueError(
+                        f"Cannot apply migration '{revision.revision_id}' - missing dependency "
+                        f"between '{filtered_revisions[i - 1].revision_id}' and '{revision.revision_id}'"
+                    )
+
+            expected_down_revision_id = revision.revision_id
 
     def downgrade(
         self,
@@ -104,3 +135,34 @@ class MigrationService:
         return self.database.list_migrations(
             author=author, tags=tags, created_at=created_at
         )
+
+    def get_combined_migrations(
+        self,
+        author: str | None = None,
+        tags: list[str] | None = None,
+        created_at: datetime | None = None,
+    ) -> list[tuple[Revision, Literal["applied", "not applied"]]]:
+        db_migrations = self.database.list_migrations(
+            author=author, tags=tags, created_at=created_at
+        )
+        db_revision_ids = {rev.revision_id for rev in db_migrations}
+        local_migrations = list(self.graph.iter())
+
+        combined = list[tuple[Revision, Literal["applied", "not applied"]]]()
+
+        for rev in db_migrations:
+            combined.append((rev, "applied"))
+
+        for rev in local_migrations:
+            if rev.revision_id not in db_revision_ids:
+                if author and rev.author != author:
+                    continue
+                if tags and not (rev.tags and set(rev.tags) & set(tags)):
+                    continue
+                if created_at and rev.created_at < created_at:
+                    continue
+                combined.append((rev, "not applied"))
+
+        combined.sort(key=lambda x: x[0].created_at, reverse=True)
+
+        return combined

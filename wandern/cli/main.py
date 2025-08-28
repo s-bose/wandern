@@ -60,27 +60,12 @@ def init(
             )
             raise typer.Exit(code=1)
 
-        db_dsn = form(
-            provider=select(
-                "Select the database provider:",
-                choices=[provider.value for provider in DatabaseProviders],
-            ),
-            username=text("Enter the database username:"),
-            password=password("Enter the database password:"),
-            host=text("Enter the database host:", default="localhost"),
-            port=text("Enter the database port:", default="5432"),
-            database=text("Enter the database name:"),
-        ).ask()
-
+        db_dsn = text("Enter the database connection string:").ask()
         if not db_dsn:
             raise typer.Exit(code=1)
 
-        dsn = (
-            f"{db_dsn['provider']}://{db_dsn['username']}:{db_dsn['password']}"
-            f"@{db_dsn['host']}:{db_dsn['port']}/{db_dsn['database']}"
-        )
         config = Config(
-            dsn=dsn,
+            dsn=db_dsn,
             migration_dir=migration_dir,
         )
 
@@ -192,12 +177,12 @@ def generate(
     )
 
 
-@app.command(help="Upgrade database migrations")
+@app.command(name="up", help="Upgrade database migrations")
 def upgrade(
     steps: Annotated[
         int | None,
         typer.Option(
-            help="Number of migration steps to apply (default: all)",
+            help="Number of migration steps to apply",
         ),
     ] = None,
     tags: Annotated[
@@ -225,10 +210,14 @@ def upgrade(
         rich.print(f"[green]Applying migrations with tags: {tags}[/green]")
 
     migration_service = MigrationService(config)
-    migration_service.upgrade(steps=steps, author=author, tags=tags_list)
+    try:
+        migration_service.upgrade(steps=steps, author=author, tags=tags_list)
+    except ValueError as e:
+        rich.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
 
 
-@app.command(help="Downgrade database migrations")
+@app.command(name="down", help="Downgrade database migrations")
 def downgrade(
     steps: Annotated[
         int | None,
@@ -257,13 +246,30 @@ def reset():
 
 
 @app.command(help="Browse database migrations interactively")
-def browse():
+def browse(
+    all_migrations: Annotated[
+        bool,
+        typer.Option(
+            "--all",
+            "-A",
+            help="Include all migrations (both local and database)",
+        ),
+    ] = False,
+):
     """Interactive browser for migrations with search and filtering."""
     config = load_config(config_path)
     service = MigrationService(config)
     console = Console(force_terminal=True)
 
-    all_revisions = service.database.list_migrations()
+    db_head = service.database.get_head_revision()
+    db_head_id = db_head.revision_id if db_head else None
+
+    if all_migrations:
+        combined_revisions = service.get_combined_migrations()
+        all_revisions = [rev for rev, _ in combined_revisions]
+    else:
+        all_revisions = service.database.list_migrations()
+
     authors = sorted(set(rev.author for rev in all_revisions if rev.author))
     tags = sorted(set(tag for rev in all_revisions for tag in rev.tags or []))
 
@@ -272,14 +278,30 @@ def browse():
     date_filter = None
 
     while True:
-        filtered_revisions = service.filter_migrations(
-            author=author_filter,
-            tags=tags_filter if tags_filter else None,
-            created_at=date_filter,
-        )
+        if all_migrations:
+            combined_filtered = service.get_combined_migrations(
+                author=author_filter,
+                tags=tags_filter if tags_filter else None,
+                created_at=date_filter,
+            )
+            filtered_revisions = [rev for rev, _ in combined_filtered]
+            filtered_sources = [source for _, source in combined_filtered]
+        else:
+            filtered_revisions = service.filter_migrations(
+                author=author_filter,
+                tags=tags_filter if tags_filter else None,
+                created_at=date_filter,
+            )
+            filtered_sources = None
 
         display_migrations_state(
-            console, filtered_revisions, author_filter, tags_filter, date_filter
+            console,
+            filtered_revisions,
+            author_filter,
+            tags_filter,
+            date_filter,
+            filtered_sources,
+            db_head_id,
         )
 
         action = select(

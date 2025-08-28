@@ -84,7 +84,7 @@ def test_get_head_revision(config):
     query = SQL(
         """
         INSERT INTO public.{table}
-        VALUES ( %(revision_id)s, %(down_revision_id)s, %(created_at)s )
+        VALUES ( %(revision_id)s, %(down_revision_id)s, %(message)s, %(tags)s, %(author)s, %(created_at)s )
         """
     ).format(table=Identifier(config.migration_table))
 
@@ -93,16 +93,19 @@ def test_get_head_revision(config):
             cur.execute(
                 query,
                 {
-                    "revision_id": 1,
+                    "revision_id": "1",
                     "down_revision_id": None,
+                    "message": "Test revision",
+                    "tags": [],
+                    "author": "test_user",
                     "created_at": datetime.now(),
                 },
             )
 
     revision = migration.get_head_revision()
     assert revision is not None
-    assert revision["revision_id"] == "1"
-    assert revision["down_revision_id"] is None
+    assert revision.revision_id == "1"
+    assert revision.down_revision_id is None
 
 
 def test_migrate_up(config):
@@ -110,7 +113,7 @@ def test_migrate_up(config):
         revision_id="aaaaa",
         down_revision_id=None,
         message="First Revision",
-        up_sql="""CREATE TABLE public.users (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -127,8 +130,8 @@ def test_migrate_up(config):
     revision_db = migration.get_head_revision()
     assert revision_db is not None
 
-    assert revision_db["revision_id"] == "aaaaa"
-    assert revision_db["down_revision_id"] is None
+    assert revision_db.revision_id == "aaaaa"
+    assert revision_db.down_revision_id is None
 
     with psycopg.connect(config.dsn) as conn:
         with conn.cursor() as cur:
@@ -150,7 +153,7 @@ def test_migrate_up_multiple_revision(config):
         revision_id="aaaaa",
         down_revision_id=None,
         message="First Revision",
-        up_sql="""CREATE TABLE public.users (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -163,7 +166,7 @@ def test_migrate_up_multiple_revision(config):
         revision_id="bbbbb",
         down_revision_id="aaaaa",
         message="Second Revision",
-        up_sql="""CREATE TABLE public.organizations (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.organizations (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -182,8 +185,8 @@ def test_migrate_up_multiple_revision(config):
 
     revision = migration.get_head_revision()
     assert revision
-    assert revision["revision_id"] == "bbbbb"
-    assert revision["down_revision_id"] == "aaaaa"
+    assert revision.revision_id == "bbbbb"
+    assert revision.down_revision_id == "aaaaa"
 
     with psycopg.connect(config.dsn) as conn:
         with conn.cursor() as cur:
@@ -206,7 +209,7 @@ def test_migrate_down(config):
         revision_id="aaaaa",
         down_revision_id=None,
         message="First Revision",
-        up_sql="""CREATE TABLE public.users (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -231,7 +234,7 @@ def test_migrate_down(config):
 
             head = migration.get_head_revision()
             assert head
-            assert head["revision_id"] == "aaaaa"
+            assert head.revision_id == "aaaaa"
 
             migration.migrate_down(revision)
 
@@ -251,7 +254,7 @@ def test_migrate_down_multiple_revision(config):
         revision_id="aaaaa",
         down_revision_id=None,
         message="First Revision",
-        up_sql="""CREATE TABLE public.users (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -264,7 +267,7 @@ def test_migrate_down_multiple_revision(config):
         revision_id="bbbbb",
         down_revision_id="aaaaa",
         message="Second Revision",
-        up_sql="""CREATE TABLE public.organizations (
+        up_sql="""CREATE TABLE IF NOT EXISTS public.organizations (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -284,8 +287,8 @@ def test_migrate_down_multiple_revision(config):
 
     revision = migration.get_head_revision()
     assert revision
-    assert revision["revision_id"] == "bbbbb"
-    assert revision["down_revision_id"] == "aaaaa"
+    assert revision.revision_id == "bbbbb"
+    assert revision.down_revision_id == "aaaaa"
 
     with psycopg.connect(config.dsn) as conn:
         with conn.cursor() as cur:
@@ -309,8 +312,8 @@ def test_migrate_down_multiple_revision(config):
 
             head = migration.get_head_revision()
             assert head
-            assert head["revision_id"] == "aaaaa"
-            assert head["down_revision_id"] is None
+            assert head.revision_id == "aaaaa"
+            assert head.down_revision_id is None
 
             migration.migrate_down(first_revision)
 

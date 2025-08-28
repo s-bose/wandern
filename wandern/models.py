@@ -62,7 +62,7 @@ class Revision(BaseModel):
     tags: Annotated[
         list[str] | None,
         Field(default=[], description="List of tags associated with the revision"),
-    ]
+    ] = None
     author: Annotated[str | None, Field(description="The author of the revision")] = (
         None
     )
@@ -78,4 +78,4 @@ class Revision(BaseModel):
             default_factory=datetime.now,
             description="Time when the revision was created",
         ),
-    ]
+    ] = datetime.now()

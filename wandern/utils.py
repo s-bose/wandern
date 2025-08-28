@@ -28,7 +28,7 @@ def generate_migration_filename(
     version: str,
     message: str | None,
     author: str | None = None,
-):
+) -> str:
     current_timestamp = datetime.now(tz=UTC)
     kwargs: FileTemplateArgs = {
         "version": str(int(version)) if version.isnumeric() else version,
@@ -58,7 +58,7 @@ def generate_migration_filename(
         ) from exc
 
 
-def parse_sql_file_content(file_path: str | Path):
+def parse_sql_file_content(file_path: str | Path) -> Revision:
     with open(file_path, encoding="utf-8") as file:
         content = file.read()
 
@@ -93,7 +93,7 @@ def parse_sql_file_content(file_path: str | Path):
         )
 
 
-def generate_revision_id():
+def generate_revision_id() -> str:
     return uuid.uuid4().hex[:8]
 
 
@@ -102,7 +102,7 @@ def create_empty_migration(
     down_revision_id: str | None,
     author: str | None = None,
     tags: list[str] | None = None,
-):
+) -> Revision:
     version = generate_revision_id()
 
     return Revision(
@@ -117,7 +117,7 @@ def create_empty_migration(
     )
 
 
-def load_config(path: str | Path):
+def load_config(path: str | Path) -> Config:
     config_dir = os.path.abspath(path)
     if not os.access(config_dir, os.F_OK):
         rich.print("[red]No wandern config found in the current directory[/red]")
@@ -134,7 +134,7 @@ def load_config(path: str | Path):
     return config
 
 
-def save_config(config: Config, path: str | Path):
+def save_config(config: Config, path: str | Path) -> None:
     config_dir = os.path.abspath(path)
 
     with open(config_dir, "w", encoding="utf-8") as file:

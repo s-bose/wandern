@@ -6,7 +6,7 @@ import rich
 import getpass
 from datetime import datetime
 from rich.console import Console
-from questionary import form, select, text, password, path, checkbox
+from questionary import form, text, password, path, select, checkbox
 
 from wandern.agents.sql_agent import MigrationAgent
 from wandern.constants import DEFAULT_CONFIG_FILENAME
@@ -15,10 +15,10 @@ from wandern.utils import (
     save_config,
     create_empty_migration,
 )
-from wandern.models import Config
+from wandern.models import Config, DatabaseProviders
 from wandern.migration import MigrationService
 
-from wandern.cli.utils import create_migration_table, date_validator
+from wandern.cli.utils import date_validator, display_migrations_state
 
 app = typer.Typer(rich_markup_mode="rich")
 config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME
@@ -50,6 +50,9 @@ def init(
             "Enter the path to the migration directory:", only_directories=True
         ).ask()
 
+        if not migration_dir:
+            raise typer.Exit(code=1)
+
         migration_dir = os.path.abspath(migration_dir)
         if os.access(migration_dir, os.F_OK) and os.listdir(migration_dir):
             rich.print(
@@ -58,13 +61,19 @@ def init(
             raise typer.Exit(code=1)
 
         db_dsn = form(
-            provider=select("Select the database provider:", choices=["postgresql"]),
+            provider=select(
+                "Select the database provider:",
+                choices=[provider.value for provider in DatabaseProviders],
+            ),
             username=text("Enter the database username:"),
             password=password("Enter the database password:"),
             host=text("Enter the database host:", default="localhost"),
             port=text("Enter the database port:", default="5432"),
             database=text("Enter the database name:"),
         ).ask()
+
+        if not db_dsn:
+            raise typer.Exit(code=1)
 
         dsn = (
             f"{db_dsn['provider']}://{db_dsn['username']}:{db_dsn['password']}"
@@ -159,14 +168,15 @@ def generate(
             f" [yellow]{revision.revision_id}[/yellow]"
         )
     else:
-        prompt = typer.prompt("Describe the migration")
+        user_prompt = typer.prompt("Describe the migration")
         agent = MigrationAgent(config=config)
-        response = agent.generate_revision(prompt)
+        response = agent.generate_revision(user_prompt)
         if response.error:
             rich.print(f"[red]Error:[/red] {response.error}")
             raise typer.Exit(code=1)
 
         revision.message = response.data.message or ""
+        revision.tags = tags_list
         revision.up_sql = response.data.up_sql
         revision.down_sql = response.data.down_sql
 
@@ -248,110 +258,57 @@ def reset():
 
 @app.command(help="Browse database migrations interactively")
 def browse():
-    """Interactive browser for migrations with search and filtering.
-
-    Allows you to:
-    - Filter by author
-    - Filter by one or more tags
-    - Filter by date (migrations created after a specific date)
-    - View migrations in a live, interactive table
-    """
+    """Interactive browser for migrations with search and filtering."""
     config = load_config(config_path)
     service = MigrationService(config)
-    console = Console()
+    console = Console(force_terminal=True)
 
-    # Get all migrations once to extract available authors and tags
     all_revisions = service.database.list_migrations()
     authors = sorted(set(rev.author for rev in all_revisions if rev.author))
     tags = sorted(set(tag for rev in all_revisions for tag in rev.tags or []))
 
-    # Initialize filters
     author_filter = None
     tags_filter = []
     date_filter = None
 
-    try:
-        while True:
-            # Execute SQL query with current filters
-            filtered_revisions = service.filter_migrations(
-                author=author_filter,
-                tags=tags_filter if tags_filter else None,
-                created_at=date_filter,
-            )
+    while True:
+        filtered_revisions = service.filter_migrations(
+            author=author_filter,
+            tags=tags_filter if tags_filter else None,
+            created_at=date_filter,
+        )
 
-            # Display
-            console.clear()
-            console.print("[bold blue]Interactive Migrations Browser[/bold blue]")
-            console.print()
-            console.print(create_migration_table(filtered_revisions))
+        display_migrations_state(
+            console, filtered_revisions, author_filter, tags_filter, date_filter
+        )
 
-            # Show filters
-            filter_info = []
-            if author_filter:
-                filter_info.append(f"Author: {author_filter}")
-            if tags_filter:
-                filter_info.append(f"Tags: {', '.join(tags_filter)}")
-            if date_filter:
-                date_str = date_filter.strftime("%Y-%m-%d")
-                filter_info.append(f"Date: after {date_str}")
+        action = select(
+            "Select an action:", choices=["Author", "Tags", "Date", "Clear", "Exit"]
+        ).ask()
 
-            console.print()
-            if filter_info:
-                console.print(f"[dim]Active filters: {' | '.join(filter_info)}[/dim]")
-            else:
-                console.print("[dim]No filters active[/dim]")
-            console.print()
-
-            # Simple menu
-            choices = [
-                "Author",
-                "Tags",
-                "Date",
-                "Clear",
-                "Exit",
-            ]
-            action = select("Filter by:", choices=choices).ask()
-
-            if action == "Exit" or action is None:
-                break
-            elif action == "Author":
-                if not authors:
-                    console.print("[yellow]No authors found[/yellow]")
-                    continue
-                author_choices = ["[Clear]"] + authors
-                selected = select("Select author:", choices=author_choices).ask()
+        if action == "Exit" or action is None:
+            break
+        elif action == "Author":
+            if authors:
+                selected = select("Select author:", choices=["[Clear]"] + authors).ask()
                 author_filter = None if selected == "[Clear]" else selected
-
-            elif action == "Tags":
-                if not tags:
-                    console.print("[yellow]No tags found[/yellow]")
-                    continue
-                selected_tags = checkbox("Select tags:", choices=tags).ask()
-                tags_filter = selected_tags if selected_tags else []
-
-            elif action == "Date":
-                date_input = text(
-                    "Enter date (YYYY-MM-DD) to show migrations after "
-                    "this date (leave empty to clear):",
-                    validate=date_validator,
-                ).ask()
-
-                if not date_input or date_input.strip() == "":
-                    date_filter = None
-                else:
-                    try:
-                        date_filter = datetime.strptime(date_input.strip(), "%Y-%m-%d")
-                    except ValueError:
-                        console.print(
-                            "[red]Invalid date format. " "Please use YYYY-MM-DD[/red]"
-                        )
-                        continue
-
-            elif action == "Clear":
-                author_filter = None
-                tags_filter = []
+        elif action == "Tags":
+            if tags:
+                tags_filter = checkbox("Select tags:", choices=tags).ask() or []
+        elif action == "Date":
+            date_input = text(
+                "Enter date (YYYY-MM-DD, empty to clear):", validate=date_validator
+            ).ask()
+            if date_input and date_input.strip():
+                try:
+                    date_filter = datetime.strptime(date_input.strip(), "%Y-%m-%d")
+                except ValueError:
+                    pass
+            else:
                 date_filter = None
+        elif action == "Clear":
+            author_filter = None
+            tags_filter = []
+            date_filter = None
 
-    except KeyboardInterrupt:
-        console.print("\nExiting interactive migrations browser.")
-        raise typer.Exit()
+    raise typer.Exit()

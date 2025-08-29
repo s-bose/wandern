@@ -6,11 +6,11 @@ from psycopg.rows import dict_row, DictRow
 from psycopg.connection import Connection
 from wandern.models import Config
 from wandern.exceptions import ConnectError
-from wandern.databases.base import DatabaseMigration
+from wandern.databases.base import BaseProvider
 from wandern.models import Revision
 
 
-class PostgresMigration(DatabaseMigration):
+class PostgresProvider(BaseProvider):
     def __init__(self, config: Config):
         self.config = config
 

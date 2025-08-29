@@ -81,6 +81,37 @@ def test_generate_migration_filename_errors():
         generate_migration_filename(fmt="{nonexistent}", version="1", message="test")
 
 
+def test_generate_migration_filename_edge_cases():
+    """Test edge cases for generate_migration_filename."""
+    # Test when filename already ends with .sql
+    result = generate_migration_filename(
+        fmt="{version}_{message}.sql", version="0001", message="test"
+    )
+    assert result.endswith(".sql")
+    assert result.count(".sql") == 1  # Should not double-append
+
+    # Test with None message but valid slug generation
+    result = generate_migration_filename(
+        fmt="{version}_{slug}", version="0001", message=None
+    )
+    assert "1" in result
+    assert result.endswith(".sql")
+
+    # Test with empty message
+    result = generate_migration_filename(fmt="{version}", version="0001", message="")
+    assert "1" in result
+
+    # Test with all template variables
+    result = generate_migration_filename(
+        fmt="{year}_{month}_{day}_{hour}_{minute}_{second}_{epoch}_{version}_{author}_{slug}_{message}",
+        version="0001",
+        message="test migration",
+        author="john_doe",
+    )
+    assert "john_doe" in result
+    assert "test_migration" in result
+
+
 def test_generate_revision_id():
     """Test revision ID generation."""
     rev_id = generate_revision_id()
@@ -204,6 +235,81 @@ def test_parse_sql_file_content_invalid():
             os.unlink(f.name)
 
 
+def test_parse_sql_file_content_missing_fields():
+    """Test parsing SQL file with missing required fields."""
+    # Missing timestamp
+    content = """/*
+    Revision ID: abc123
+    Revises: none
+    Message: test migration
+    */
+    -- UP
+    -- DOWN
+    """
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+        try:
+            with pytest.raises(ValueError, match="Timestamp field is required"):
+                parse_sql_file_content(f.name)
+        finally:
+            os.unlink(f.name)
+
+    # Missing revision ID
+    content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revises: none
+    Message: test migration
+    */
+    -- UP
+    -- DOWN
+    """
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+        try:
+            with pytest.raises(ValueError, match="Revision ID field is required"):
+                parse_sql_file_content(f.name)
+        finally:
+            os.unlink(f.name)
+
+    # Missing revises field
+    content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: abc123
+    Message: test migration
+    */
+    -- UP
+    -- DOWN
+    """
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+        try:
+            with pytest.raises(ValueError, match="Revises field is required"):
+                parse_sql_file_content(f.name)
+        finally:
+            os.unlink(f.name)
+
+    # Missing message field
+    content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: abc123
+    Revises: none
+    */
+    -- UP
+    -- DOWN
+    """
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+        f.write(content)
+        f.flush()
+        try:
+            with pytest.raises(ValueError, match="Message field is required"):
+                parse_sql_file_content(f.name)
+        finally:
+            os.unlink(f.name)
+
+
 def test_load_config():
     """Test loading configuration from file."""
     config_data = {
@@ -258,6 +364,32 @@ def test_load_config_unwriteable_migration_dir():
                 load_config(f.name)
         finally:
             os.unlink(f.name)
+
+
+def test_load_config_invalid_json():
+    """Test loading config with invalid JSON."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        f.write("invalid json content {")
+        f.flush()
+
+        try:
+            with pytest.raises(json.JSONDecodeError):
+                load_config(f.name)
+        finally:
+            os.unlink(f.name)
+
+
+def test_save_config_error_handling():
+    """Test save_config with error conditions."""
+    config = Config(
+        dsn="postgresql://user:pass@localhost/db",
+        migration_dir="./migrations",
+    )
+
+    # Test saving to a directory that doesn't exist
+    nonexistent_dir = "/nonexistent/directory/config.json"
+    with pytest.raises((FileNotFoundError, PermissionError, OSError)):
+        save_config(config, nonexistent_dir)
 
 
 def test_save_config():

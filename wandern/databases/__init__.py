@@ -1,11 +1,11 @@
 from .provider import DatabaseProviders, get_database_impl
-from .postgresql import PostgresMigration
-from .sqlite import SQLiteMigration
+from .postgresql import PostgresProvider
+from .sqlite import SQLiteProvider
 
 
 __all__ = [
     "DatabaseProviders",
     "get_database_impl",
-    "PostgresMigration",
-    "SQLiteMigration",
+    "PostgresProvider",
+    "SQLiteProvider",
 ]

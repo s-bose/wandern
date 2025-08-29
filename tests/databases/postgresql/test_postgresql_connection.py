@@ -1,5 +1,5 @@
 import pytest
-from wandern.databases.postgresql import PostgresMigration
+from wandern.databases.postgresql import PostgresProvider
 from wandern.models import Config
 from wandern.exceptions import ConnectError
 
@@ -10,6 +10,6 @@ def test_connect():
         dsn="postgresql://foo:bar@localhost:5432/test",
         migration_dir="migrations",
     )
-    migration = PostgresMigration(config)
+    migration = PostgresProvider(config)
     with pytest.raises(ConnectError):
         migration.connect()

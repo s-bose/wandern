@@ -4,7 +4,7 @@ from wandern.models import Revision
 
 
 @runtime_checkable
-class DatabaseMigration(Protocol):
+class BaseProvider(Protocol):
     def create_table_migration(self) -> Any: ...
 
     def drop_table_migration(self) -> Any: ...

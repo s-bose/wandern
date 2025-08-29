@@ -1,3 +1,4 @@
+# noqa
 DANGEROUS_PATTERNS = [
     r"ignore\s+(all\s+)?previous\s+instructions?",
     r"you\s+are\s+now\s+(in\s+)?developer\s+mode",

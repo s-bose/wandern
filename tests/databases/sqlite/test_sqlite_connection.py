@@ -1,4 +1,4 @@
-from wandern.databases.sqlite import SQLiteMigration
+from wandern.databases.sqlite import SQLiteProvider
 from wandern.exceptions import ConnectError
 from wandern.models import Config
 import pytest
@@ -20,7 +20,7 @@ def test_connect_permission_denied():
         dsn=restricted_path,
         migration_dir="migrations",
     )
-    migration = SQLiteMigration(config)
+    migration = SQLiteProvider(config)
 
     with pytest.raises(ConnectError):
         migration.connect()
@@ -36,7 +36,7 @@ def test_connect_invalid_path():
         dsn=invalid_path,
         migration_dir="migrations",
     )
-    migration = SQLiteMigration(config)
+    migration = SQLiteProvider(config)
 
     with pytest.raises(ConnectError):
         migration.connect()
@@ -53,7 +53,7 @@ def test_connect_nonexistent_directory():
         dsn=nonexistent_path,
         migration_dir="migrations",
     )
-    migration = SQLiteMigration(config)
+    migration = SQLiteProvider(config)
 
     with pytest.raises(ConnectError):
         migration.connect()

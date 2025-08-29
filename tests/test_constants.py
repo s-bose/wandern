@@ -1,9 +1,16 @@
 from wandern.constants import (
     REGEX_MIGRATION_PARSER,
+    REGEX_TIMESTAMP,
+    REGEX_REVISION_ID,
+    REGEX_REVISES,
+    REGEX_MESSAGE,
+    REGEX_AUTHOR,
+    REGEX_TAGS,
     DEFAULT_FILE_FORMAT,
     DEFAULT_MIGRATION_TABLE,
     DEFAULT_CONFIG_FILENAME,
     parse_migration_content,
+    CompatibleMatch,
 )
 
 
@@ -496,3 +503,311 @@ def test_migration_regex_case_insensitive_fields():
     assert match.group("message") == "case test migration"
     assert match.group("author") == "Test Author"
     assert match.group("tags") == "test, case"
+
+
+def test_individual_regex_patterns():
+    """Test individual regex patterns work correctly."""
+    # Test REGEX_TIMESTAMP
+    content = "Some text\nTimestamp: 2024-11-19 15:30:45\nOther text"
+    match = REGEX_TIMESTAMP.search(content)
+    assert match is not None
+    assert match.group("timestamp") == "2024-11-19 15:30:45"
+
+    # Test case insensitive
+    content_lower = "timestamp: 2024-11-19 15:30:45"
+    match = REGEX_TIMESTAMP.search(content_lower)
+    assert match is not None
+    assert match.group("timestamp") == "2024-11-19 15:30:45"
+
+    # Test REGEX_REVISION_ID
+    content = "Revision ID: abc123"
+    match = REGEX_REVISION_ID.search(content)
+    assert match is not None
+    assert match.group("revision_id") == "abc123"
+
+    # Test with space variations
+    content = "Revision   ID:def456"
+    match = REGEX_REVISION_ID.search(content)
+    assert match is not None
+    assert match.group("revision_id") == "def456"
+
+    # Test REGEX_REVISES
+    content = "Revises: previous_rev"
+    match = REGEX_REVISES.search(content)
+    assert match is not None
+    assert match.group("revises") == "previous_rev"
+
+    # Test REGEX_MESSAGE
+    content = "Message: This is a test migration message"
+    match = REGEX_MESSAGE.search(content)
+    assert match is not None
+    assert match.group("message") == "This is a test migration message"
+
+    # Test REGEX_AUTHOR
+    content = "Author: John Doe <john@example.com>"
+    match = REGEX_AUTHOR.search(content)
+    assert match is not None
+    assert match.group("author") == "John Doe <john@example.com>"
+
+    # Test REGEX_TAGS
+    content = "Tags: tag1, tag2, tag3"
+    match = REGEX_TAGS.search(content)
+    assert match is not None
+    assert match.group("tags") == "tag1, tag2, tag3"
+
+
+def test_individual_regex_patterns_no_match():
+    """Test individual regex patterns return None when no match found."""
+    no_match_content = "Some random text without any patterns"
+
+    assert REGEX_TIMESTAMP.search(no_match_content) is None
+    assert REGEX_REVISION_ID.search(no_match_content) is None
+    assert REGEX_REVISES.search(no_match_content) is None
+    assert REGEX_MESSAGE.search(no_match_content) is None
+    assert REGEX_AUTHOR.search(no_match_content) is None
+    assert REGEX_TAGS.search(no_match_content) is None
+
+
+def test_compatible_match_span_start_end_methods():
+    """Test CompatibleMatch span, start, and end methods."""
+    migration_content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: test123
+    Revises: prev456
+    Message: test migration
+    */
+
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    match = parse_migration_content(migration_content)
+    assert match is not None
+
+    # Test span method
+    span = match.span()
+    assert isinstance(span, tuple)
+    assert len(span) == 2
+    assert span[0] >= 0
+    assert span[1] > span[0]
+
+    # Test start method
+    start = match.start()
+    assert isinstance(start, int)
+    assert start >= 0
+    assert start == span[0]
+
+    # Test end method
+    end = match.end()
+    assert isinstance(end, int)
+    assert end > start
+    assert end == span[1]
+
+
+def test_compatible_match_invalid_content():
+    """Test CompatibleMatch raises ValueError for invalid content."""
+    invalid_content = "This is not a valid migration file"
+
+    try:
+        CompatibleMatch(invalid_content)
+        assert False, "Expected ValueError to be raised"
+    except ValueError as e:
+        assert "Invalid migration file format" in str(e)
+
+
+def test_compatible_match_missing_required_fields():
+    """Test CompatibleMatch raises ValueError when required fields are missing."""
+    # Missing timestamp
+    content_missing_timestamp = """/*
+    Revision ID: test123
+    Revises: prev456
+    Message: test migration
+    */
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    try:
+        CompatibleMatch(content_missing_timestamp)
+        assert False, "Expected ValueError to be raised"
+    except ValueError as e:
+        assert "Missing required fields in migration file" in str(e)
+
+    # Missing revision_id
+    content_missing_revision_id = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revises: prev456
+    Message: test migration
+    */
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    try:
+        CompatibleMatch(content_missing_revision_id)
+        assert False, "Expected ValueError to be raised"
+    except ValueError as e:
+        assert "Missing required fields in migration file" in str(e)
+
+    # Missing revises
+    content_missing_revises = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: test123
+    Message: test migration
+    */
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    try:
+        CompatibleMatch(content_missing_revises)
+        assert False, "Expected ValueError to be raised"
+    except ValueError as e:
+        assert "Missing required fields in migration file" in str(e)
+
+    # Missing message
+    content_missing_message = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: test123
+    Revises: prev456
+    */
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    try:
+        CompatibleMatch(content_missing_message)
+        assert False, "Expected ValueError to be raised"
+    except ValueError as e:
+        assert "Missing required fields in migration file" in str(e)
+
+
+def test_compatible_match_group_nonexistent_field():
+    """Test CompatibleMatch.group() returns None for non-existent fields."""
+    migration_content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: test123
+    Revises: prev456
+    Message: test migration
+    */
+
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    match = parse_migration_content(migration_content)
+    assert match is not None
+
+    # Test accessing non-existent field
+    assert match.group("nonexistent_field") is None
+    assert match.group("") is None
+
+
+def test_compatible_match_groupdict_immutability():
+    """Test that groupdict() returns a copy and modifications don't affect original."""
+    migration_content = """/*
+    Timestamp: 2024-11-19 00:55:16
+    Revision ID: test123
+    Revises: prev456
+    Message: test migration
+    Author: Test Author
+    Tags: test, migration
+    */
+
+    -- UP
+    CREATE TABLE test;
+    -- DOWN
+    DROP TABLE test;
+    """
+
+    match = parse_migration_content(migration_content)
+    assert match is not None
+
+    # Get groupdict
+    original_dict = match.groupdict()
+    modified_dict = match.groupdict()
+
+    # Modify the copy
+    modified_dict["timestamp"] = "modified_timestamp"
+    modified_dict["new_field"] = "new_value"
+
+    # Original should be unchanged
+    assert original_dict["timestamp"] == "2024-11-19 00:55:16"
+    assert "new_field" not in original_dict
+
+    # Getting groupdict again should return original values
+    fresh_dict = match.groupdict()
+    assert fresh_dict["timestamp"] == "2024-11-19 00:55:16"
+    assert "new_field" not in fresh_dict
+
+
+def test_parse_migration_content_with_invalid_format():
+    """Test parse_migration_content returns None for completely invalid formats."""
+    invalid_formats = [
+        "",  # Empty string
+        "/* No proper structure */",  # Missing UP/DOWN sections
+        "-- UP\n-- DOWN",  # Missing comment block
+        "/*\nSome comment\n*/\nNo UP/DOWN sections",  # Missing UP/DOWN
+        "Random text",  # Completely wrong format
+    ]
+
+    for invalid_content in invalid_formats:
+        result = parse_migration_content(invalid_content)
+        assert result is None, f"Expected None for content: {invalid_content}"
+
+
+def test_regex_patterns_with_edge_cases():
+    """Test regex patterns with various edge cases and formatting."""
+    # Test timestamp with different formats
+    timestamp_cases = [
+        "Timestamp: 2024-01-01 00:00:00",
+        "timestamp: 2024-12-31 23:59:59",
+        "TIMESTAMP: 2024-06-15 12:30:45",
+        "Timestamp:2024-11-19 15:30:45",  # No space after colon
+        "Timestamp:  2024-11-19 15:30:45",  # Multiple spaces
+    ]
+
+    for case in timestamp_cases:
+        match = REGEX_TIMESTAMP.search(case)
+        assert match is not None, f"Failed to match: {case}"
+        assert "2024-" in match.group("timestamp")
+
+    # Test revision ID with different formats
+    revision_cases = [
+        "Revision ID: abc123",
+        "revision id: def456",
+        "REVISION ID: xyz789",
+        "Revision ID:test123",  # No space after colon
+        "Revision   ID: spaced123",  # Multiple spaces in field name
+    ]
+
+    for case in revision_cases:
+        match = REGEX_REVISION_ID.search(case)
+        assert match is not None, f"Failed to match: {case}"
+        assert match.group("revision_id") is not None
+
+    # Test message with special characters and line endings
+    message_cases = [
+        "Message: Simple message",
+        "message: Message with special chars: @#$%^&*()",
+        "MESSAGE: Message ending with newline\n",
+        "Message: Message with numbers 123 and symbols !@#",
+        "Message:No space after colon",
+    ]
+
+    for case in message_cases:
+        match = REGEX_MESSAGE.search(case)
+        assert match is not None, f"Failed to match: {case}"
+        assert match.group("message") is not None

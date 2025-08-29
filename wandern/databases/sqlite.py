@@ -1,11 +1,11 @@
 import sqlite3
 from datetime import datetime
-from wandern.databases.base import DatabaseMigration
+from wandern.databases.base import BaseProvider
 from wandern.models import Config, Revision
 from wandern.exceptions import ConnectError
 
 
-class SQLiteMigration(DatabaseMigration):
+class SQLiteProvider(BaseProvider):
     def __init__(self, config: Config):
         self.config = config
 

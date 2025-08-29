@@ -1,7 +1,7 @@
 import pytest
 import networkx as nx
 from wandern.graph import MigrationGraph
-from wandern.exceptions import DivergentbranchError, CycleDetected
+from wandern.exceptions import DivergentbranchError, CycleDetected, InvalidMigrationFile
 from wandern.models import Revision
 
 
@@ -217,3 +217,53 @@ def test_check_cycles_no_cycles():
 
     result = MigrationGraph.check_cycles(dg)
     assert result is None
+
+
+def test_build_with_non_sql_file(tmp_path):
+    """Test MigrationGraph.build raises InvalidMigrationFile for non-SQL files."""
+    # Create a temporary directory with a non-SQL file
+    test_dir = tmp_path / "migrations"
+    test_dir.mkdir()
+
+    # Create a non-SQL file
+    non_sql_file = test_dir / "test.txt"
+    non_sql_file.write_text("This is not a SQL file")
+
+    with pytest.raises(InvalidMigrationFile, match="Migration file must be a sql file"):
+        MigrationGraph.build(str(test_dir))
+
+
+def test_build_with_directory_in_migration_dir(tmp_path):
+    """Test MigrationGraph.build raises InvalidMigrationFile for directories."""
+    # Create a temporary directory with a subdirectory
+    test_dir = tmp_path / "migrations"
+    test_dir.mkdir()
+
+    # Create a subdirectory instead of a file
+    subdir = test_dir / "subdir"
+    subdir.mkdir()
+
+    with pytest.raises(InvalidMigrationFile, match="Migration file must be a sql file"):
+        MigrationGraph.build(str(test_dir))
+
+
+def test_build_with_invalid_sql_content(tmp_path):
+    """Test MigrationGraph.build raises InvalidMigrationFile for unparseable SQL files."""
+    from unittest.mock import patch
+
+    # Create a temporary directory with an invalid SQL file
+    test_dir = tmp_path / "migrations"
+    test_dir.mkdir()
+
+    # Create an SQL file that will cause parse_sql_file_content to raise ValueError
+    invalid_sql_file = test_dir / "invalid.sql"
+    invalid_sql_file.write_text("/*Invalid SQL content*/")
+
+    # Mock parse_sql_file_content to raise ValueError
+    with patch(
+        "wandern.graph.parse_sql_file_content", side_effect=ValueError("Parse error")
+    ):
+        with pytest.raises(
+            InvalidMigrationFile, match="Error parsing migration file: invalid.sql"
+        ):
+            MigrationGraph.build(str(test_dir))

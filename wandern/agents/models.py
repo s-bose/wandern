@@ -1,6 +1,6 @@
-from pydantic import BaseModel
 from typing import Generic, TypeVar
 
+from pydantic import BaseModel
 
 _DataT = TypeVar("_DataT", bound=BaseModel)
 _ErrorT = TypeVar("_ErrorT")

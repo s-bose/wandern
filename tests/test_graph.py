@@ -1,7 +1,8 @@
-import pytest
 import networkx as nx
+import pytest
+
+from wandern.exceptions import CycleDetected, DivergentbranchError, InvalidMigrationFile
 from wandern.graph import MigrationGraph
-from wandern.exceptions import DivergentbranchError, CycleDetected, InvalidMigrationFile
 from wandern.models import Revision
 
 

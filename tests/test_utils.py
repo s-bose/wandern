@@ -1,21 +1,23 @@
-import pytest
+import json
 import os
 import tempfile
-import json
-import typer
-from pathlib import Path
 from datetime import datetime, timezone
-from wandern.utils import (
-    generate_migration_filename,
-    slugify,
-    parse_sql_file_content,
-    generate_revision_id,
-    create_empty_migration,
-    load_config,
-    save_config,
-)
+from pathlib import Path
+
+import pytest
+import typer
+
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.models import Config
+from wandern.utils import (
+    create_empty_migration,
+    generate_migration_filename,
+    generate_revision_id,
+    load_config,
+    parse_sql_file_content,
+    save_config,
+    slugify,
+)
 
 
 def test_slugify():

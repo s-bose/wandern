@@ -1,13 +1,14 @@
-import pytest
 from datetime import datetime
+
+import pytest
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 from wandern.cli.utils import (
-    date_validator,
-    create_migration_table,
     create_filter_panel,
+    create_migration_table,
+    date_validator,
     display_migrations_state,
 )
 from wandern.models import Revision

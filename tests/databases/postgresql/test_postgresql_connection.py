@@ -1,7 +1,8 @@
 import pytest
+
 from wandern.databases.postgresql import PostgresProvider
-from wandern.models import Config
 from wandern.exceptions import ConnectError
+from wandern.models import Config
 
 
 def test_connect():

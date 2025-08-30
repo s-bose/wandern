@@ -1,24 +1,24 @@
-from typing import Annotated
-from pathlib import Path
-import os
-import typer
-import rich
 import getpass
+import os
 from datetime import datetime
+from pathlib import Path
+from typing import Annotated
+
+import rich
+import typer
+from questionary import checkbox, path, select, text
 from rich.console import Console
-from questionary import form, text, password, path, select, checkbox
 
 from wandern.agents.sql_agent import MigrationAgent
+from wandern.cli.utils import date_validator, display_migrations_state
 from wandern.constants import DEFAULT_CONFIG_FILENAME
+from wandern.migration import MigrationService
+from wandern.models import Config
 from wandern.utils import (
+    create_empty_migration,
     load_config,
     save_config,
-    create_empty_migration,
 )
-from wandern.models import Config, DatabaseProviders
-from wandern.migration import MigrationService
-
-from wandern.cli.utils import date_validator, display_migrations_state
 
 app = typer.Typer(rich_markup_mode="rich")
 config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME

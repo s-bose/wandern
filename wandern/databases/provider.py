@@ -1,6 +1,6 @@
 from wandern.databases.postgresql import PostgresProvider
 from wandern.databases.sqlite import SQLiteProvider
-from wandern.models import DatabaseProviders, Config
+from wandern.models import Config, DatabaseProviders
 
 
 def get_database_impl(provider: DatabaseProviders | str, config: Config):

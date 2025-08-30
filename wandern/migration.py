@@ -1,15 +1,15 @@
 import os
 from datetime import datetime
 from typing import Literal
+
 import rich
 
-from wandern.models import Config, Revision
-
+from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.databases.provider import get_database_impl
 from wandern.graph import MigrationGraph
-from wandern.utils import generate_migration_filename
-from wandern.constants import DEFAULT_FILE_FORMAT
+from wandern.models import Config, Revision
 from wandern.templates.engine import generate_template
+from wandern.utils import generate_migration_filename
 
 
 class MigrationService:

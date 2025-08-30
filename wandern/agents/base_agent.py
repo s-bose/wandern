@@ -1,13 +1,12 @@
 import os
 from abc import abstractmethod
-from typing import Sequence, Generic, TypeVar, Any, final
+from typing import Generic, Sequence, TypeVar, final
 
-import rich
+from pydantic import BaseModel
 from pydantic_ai.agent import Agent
 from pydantic_ai.models import Model
-from pydantic_ai.tools import Tool
 from pydantic_ai.settings import ModelSettings
-from pydantic import BaseModel
+from pydantic_ai.tools import Tool
 
 _DataT = TypeVar("_DataT", bound=BaseModel)
 _ErrorT = TypeVar("_ErrorT")

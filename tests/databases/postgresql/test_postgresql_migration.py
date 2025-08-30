@@ -1,11 +1,13 @@
-import pytest
 from unittest.mock import patch
+
 import networkx as nx
+import psycopg
+import pytest
+from psycopg.sql import SQL, Identifier
+
+from wandern.graph import MigrationGraph
 from wandern.migration import MigrationService
 from wandern.models import Revision
-from wandern.graph import MigrationGraph
-import psycopg
-from psycopg.sql import SQL, Identifier
 
 
 @pytest.fixture(scope="function", autouse=True)

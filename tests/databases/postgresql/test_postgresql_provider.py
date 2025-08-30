@@ -1,7 +1,9 @@
 from datetime import datetime
+
 import psycopg
 import pytest
 from psycopg.sql import SQL, Identifier
+
 from wandern.databases.postgresql import PostgresProvider
 from wandern.models import Revision
 
@@ -334,8 +336,8 @@ def test_migrate_down_multiple_revision(config):
 
 def test_connect_error():
     """Test connection error handling."""
-    from wandern.models import Config
     from wandern.exceptions import ConnectError
+    from wandern.models import Config
 
     # Invalid DSN should raise ConnectError
     invalid_config = Config(

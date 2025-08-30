@@ -1,8 +1,7 @@
-import pytest
-import tempfile
 from datetime import datetime
-from wandern.templates.engine import get_environment, generate_template
+
 from wandern.models import Revision
+from wandern.templates.engine import generate_template, get_environment
 
 
 def test_get_environment():

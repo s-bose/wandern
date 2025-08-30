@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
+
 import networkx as nx
 
 from wandern.exceptions import (
+    CycleDetected,
     DivergentbranchError,
     InvalidMigrationFile,
-    CycleDetected,
 )
-
 from wandern.models import Revision
 from wandern.utils import parse_sql_file_content
 

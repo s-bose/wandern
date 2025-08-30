@@ -1,8 +1,9 @@
-import pytest
 import os
-from testcontainers.postgres import PostgresContainer
-from wandern.models import Config
 
+import pytest
+from testcontainers.postgres import PostgresContainer
+
+from wandern.models import Config
 
 postgres = PostgresContainer("postgres:latest")
 

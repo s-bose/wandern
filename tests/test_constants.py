@@ -1,16 +1,16 @@
 from wandern.constants import (
-    REGEX_MIGRATION_PARSER,
-    REGEX_TIMESTAMP,
-    REGEX_REVISION_ID,
-    REGEX_REVISES,
-    REGEX_MESSAGE,
-    REGEX_AUTHOR,
-    REGEX_TAGS,
+    DEFAULT_CONFIG_FILENAME,
     DEFAULT_FILE_FORMAT,
     DEFAULT_MIGRATION_TABLE,
-    DEFAULT_CONFIG_FILENAME,
-    parse_migration_content,
+    REGEX_AUTHOR,
+    REGEX_MESSAGE,
+    REGEX_MIGRATION_PARSER,
+    REGEX_REVISES,
+    REGEX_REVISION_ID,
+    REGEX_TAGS,
+    REGEX_TIMESTAMP,
     CompatibleMatch,
+    parse_migration_content,
 )
 
 

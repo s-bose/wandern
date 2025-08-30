@@ -1,10 +1,12 @@
-import pytest
+import sqlite3
 from unittest.mock import patch
+
 import networkx as nx
+import pytest
+
+from wandern.graph import MigrationGraph
 from wandern.migration import MigrationService
 from wandern.models import Revision
-from wandern.graph import MigrationGraph
-import sqlite3
 
 
 @pytest.fixture(scope="function", autouse=True)

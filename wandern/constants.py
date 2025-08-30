@@ -1,5 +1,5 @@
-from typing import Pattern
 import re
+from typing import Pattern
 
 DEFAULT_FILE_FORMAT = "{version}_{slug}_{message}"
 

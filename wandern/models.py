@@ -1,6 +1,7 @@
-from typing import TypedDict, Annotated
-from enum import StrEnum
 from datetime import datetime
+from enum import StrEnum
+from typing import Annotated, TypedDict
+
 from pydantic import BaseModel, Field
 
 from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE

@@ -1,8 +1,9 @@
 import sqlite3
 from datetime import datetime
+
 from wandern.databases.base import BaseProvider
-from wandern.models import Config, Revision
 from wandern.exceptions import ConnectError
+from wandern.models import Config, Revision
 
 
 class SQLiteProvider(BaseProvider):

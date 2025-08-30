@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import Any
+
 import psycopg
-from psycopg.sql import SQL, Identifier
-from psycopg.rows import dict_row, DictRow
 from psycopg.connection import Connection
-from wandern.models import Config
-from wandern.exceptions import ConnectError
+from psycopg.rows import DictRow, dict_row
+from psycopg.sql import SQL, Identifier
+
 from wandern.databases.base import BaseProvider
-from wandern.models import Revision
+from wandern.exceptions import ConnectError
+from wandern.models import Config, Revision
 
 
 class PostgresProvider(BaseProvider):

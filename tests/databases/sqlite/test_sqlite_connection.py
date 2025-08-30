@@ -1,9 +1,10 @@
+import platform
+
+import pytest
+
 from wandern.databases.sqlite import SQLiteProvider
 from wandern.exceptions import ConnectError
 from wandern.models import Config
-import pytest
-import os
-import platform
 
 
 def test_connect_permission_denied():

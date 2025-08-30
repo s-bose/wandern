@@ -1,24 +1,25 @@
-from string import Formatter
-from datetime import datetime, UTC
-from pathlib import Path
-import os
-import json
-import hashlib
 import base64
+import hashlib
+import json
+import os
 import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+from string import Formatter
+
 import rich
 import typer
-from wandern.models import FileTemplateArgs, Config
+
 from wandern.constants import (
-    REGEX_MIGRATION_PARSER,
-    REGEX_TIMESTAMP,
-    REGEX_REVISION_ID,
-    REGEX_REVISES,
-    REGEX_MESSAGE,
     REGEX_AUTHOR,
+    REGEX_MESSAGE,
+    REGEX_MIGRATION_PARSER,
+    REGEX_REVISES,
+    REGEX_REVISION_ID,
     REGEX_TAGS,
+    REGEX_TIMESTAMP,
 )
-from wandern.models import Revision
+from wandern.models import Config, FileTemplateArgs, Revision
 
 
 def slugify(text: str, length: int = 10) -> str:

@@ -1,5 +1,6 @@
-from typing import Protocol, Any, runtime_checkable
 from datetime import datetime
+from typing import Any, Protocol, runtime_checkable
+
 from wandern.models import Revision
 
 

@@ -1,7 +1,7 @@
-import pytest
-
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
+
+import pytest
 
 from wandern.migration import MigrationService
 from wandern.models import Config, Revision

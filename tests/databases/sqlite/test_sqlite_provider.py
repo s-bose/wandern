@@ -1,5 +1,7 @@
 from datetime import datetime
+
 import pytest
+
 from wandern.databases.sqlite import SQLiteProvider
 from wandern.models import Revision
 
@@ -277,8 +279,8 @@ def test_migrate_down_multiple_revision(config):
 
 def test_connect_error():
     """Test connection error handling."""
-    from wandern.models import Config
     from wandern.exceptions import ConnectError
+    from wandern.models import Config
 
     # Invalid DSN should raise ConnectError
     invalid_config = Config(

@@ -1,16 +1,10 @@
-import rich
-import typer
-from datetime import datetime
 from dotenv import load_dotenv
-
 from pydantic import BaseModel
 
-from wandern.models import Revision, Config
-from wandern.graph import MigrationGraph
 from wandern.agents.base_agent import AgentResponse
-
 from wandern.graph import MigrationGraph
-from wandern.utils import generate_revision_id
+from wandern.models import Config
+
 from .base_agent import BaseAgent
 
 load_dotenv()
@@ -113,7 +107,6 @@ class MigrationAgent(BaseAgent[MigrationSQL, str]):
         return MigrationSQL
 
     def generate_additional_context(self):
-
         additional_context = []
 
         revisions = list(self.graph.iter())

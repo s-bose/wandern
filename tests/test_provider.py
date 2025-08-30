@@ -1,6 +1,7 @@
 import pytest
-from wandern.databases.provider import get_database_impl
+
 from wandern.databases.postgresql import PostgresProvider
+from wandern.databases.provider import get_database_impl
 from wandern.databases.sqlite import SQLiteProvider
 from wandern.models import Config, DatabaseProviders
 

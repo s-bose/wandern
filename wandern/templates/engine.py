@@ -1,6 +1,6 @@
 from functools import lru_cache
-from typing import Literal
 from pathlib import Path
+from typing import Literal
 
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment

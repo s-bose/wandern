@@ -39,16 +39,6 @@ def create_model() -> Model:
         except ImportError:
             print("Please install google dependencies with `wandern[google]`")
             raise
-    elif os.getenv("GROQ_API_KEY"):
-        try:
-            from pydantic_ai.models.groq import GroqModel
-            from pydantic_ai.providers.groq import GroqProvider
-
-            groq_provider = GroqProvider(api_key=os.getenv("GROQ_API_KEY"))
-            return GroqModel(model_name="llama-3.1-8b-instant", provider=groq_provider)
-        except ImportError:
-            print("Please install groq dependencies with `wandern[groq]`")
-            raise
     else:
         raise ValueError(
             "No supported API key found, please set either `OPENAI_API_KEY` or `GOOGLE_API_KEY`"

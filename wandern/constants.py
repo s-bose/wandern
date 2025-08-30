@@ -56,7 +56,6 @@ class CompatibleMatch:
         author_match = REGEX_AUTHOR.search(comment_block)
         tags_match = REGEX_TAGS.search(comment_block)
 
-        # Validate required fields are present (for backward compatibility)
         if (
             not timestamp_match
             or not revision_id_match
@@ -67,12 +66,12 @@ class CompatibleMatch:
 
         # Store field values
         self._fields = {
-            "timestamp": timestamp_match.group("timestamp")
-            if timestamp_match
-            else None,
-            "revision_id": revision_id_match.group("revision_id")
-            if revision_id_match
-            else None,
+            "timestamp": (
+                timestamp_match.group("timestamp") if timestamp_match else None
+            ),
+            "revision_id": (
+                revision_id_match.group("revision_id") if revision_id_match else None
+            ),
             "revises": revises_match.group("revises") if revises_match else None,
             "message": message_match.group("message") if message_match else None,
             "author": author_match.group("author") if author_match else None,

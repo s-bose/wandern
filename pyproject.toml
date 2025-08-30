@@ -46,7 +46,11 @@ check_untyped_defs = true
 dev-dependencies = ["pytest>=8.3.3", "pytest-asyncio>=0.24.0"]
 
 [dependency-groups]
-dev = ["ruff>=0.12.7", "types-networkx>=3.4.2.20250509"]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.12.7",
+ "types-networkx>=3.4.2.20250509",
+]
 test = [
     "psycopg[binary]>=3.2.9",
     "pytest-cov>=6.2.1",

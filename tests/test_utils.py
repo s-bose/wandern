@@ -120,9 +120,11 @@ def test_generate_revision_id():
     assert len(rev_id) == 8
     assert all(c in "0123456789abcdef" for c in rev_id)
 
-    # Test uniqueness
-    rev_id2 = generate_revision_id()
-    assert rev_id != rev_id2
+
+def test_generate_revision_id_uniqueness():
+    """Test uniqueness of generated revision IDs."""
+    revs = [generate_revision_id() for _ in range(100)]
+    assert len(revs) == len(set(revs))
 
 
 def test_create_empty_migration():
@@ -154,8 +156,8 @@ def test_create_empty_migration():
     assert revision.message == ""
 
 
-def test_parse_sql_file_content():
-    """Test parsing SQL file content."""
+def test_parse_sql_file_content_full():
+    """Test parsing SQL file content fully."""
     content = """/*
     Timestamp: 2024-11-19 00:55:16
     Revision ID: abc123

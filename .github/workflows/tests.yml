@@ -1,36 +1,36 @@
 name: Test Suite
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
 
 jobs:
-  run_tests:
-    name: Run Tests
-    runs-on: ubuntu-latest
+    run_tests:
+        name: Run Tests
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v6
+            - name: Install UV
+              uses: astral-sh/setup-uv@v6
 
-      - name: Install Project
-        run: uv sync --locked --all-groups --all-extras
+            - name: Install Project
+              run: uv sync --locked --all-groups --all-extras
 
-      - name: Run Tests
-        run: uv run pytest tests/ --cov=wandern --cov-report=term-missing --cov-report=xml
+            - name: Run Tests
+              run: uv run pytest tests/ --cov=wandern --cov-report=term-missing --cov-report=xml
 
-      - name: Upload Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: .coverage
+            - name: Upload Coverage
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage
+                  path: .coverage
 
-      - name: Upload coverage report to codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+            - name: Upload coverage report to codecov
+              uses: codecov/codecov-action@v5
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}

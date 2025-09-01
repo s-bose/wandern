@@ -9,7 +9,7 @@ import typer
 from questionary import checkbox, path, select, text
 from rich.console import Console
 
-from wandern.agents.sql_agent import MigrationAgent
+from wandern.agents.migration_agent import MigrationAgent
 from wandern.cli.utils import date_validator, display_migrations_state
 from wandern.constants import DEFAULT_CONFIG_FILENAME
 from wandern.migration import MigrationService
@@ -20,7 +20,7 @@ from wandern.utils import (
     save_config,
 )
 
-app = typer.Typer(rich_markup_mode="rich")
+app = typer.Typer(rich_markup_mode="rich", no_args_is_help=True)
 config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME
 
 

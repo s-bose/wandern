@@ -1,4 +1,5 @@
 import os
+import re
 from abc import abstractmethod
 from typing import Generic, Sequence, TypeVar, final
 
@@ -94,6 +95,10 @@ class BaseAgent(Generic[_DataT, _ErrorT]):
     def create_structured_prompt(
         self, user_prompt: str, additional_context: str | None = None
     ):
+        for pattern in DANGEROUS_PATTERNS:
+            if re.search(pattern, user_prompt, re.IGNORECASE | re.MULTILINE):
+                raise ValueError("Prompt contains dangerous patterns")
+
         sanitized_prompt = f"""
     SYSTEM_INSTRUCTIONS:
     {self.system_prompt}

@@ -1,11 +1,25 @@
 # Wandern
+<div align="center">
+    <p>
+      <a href="https://codecov.io/gh/s-bose/wandern" >
+         <img src="https://codecov.io/gh/s-bose/wandern/branch/master/graph/badge.svg?token=X1ZE17QCFJ"/></a>
+      <a href="https://github.com/s-bose/wandern/actions/workflows/tests.yml">
+         <img src="https://github.com/s-bose/wandern/actions/workflows/tests.yml/badge.svg"></a>
+      <a href="https://www.codefactor.io/repository/github/s-bose/wandern">
+         <img src="https://www.codefactor.io/repository/github/s-bose/wandern/badge" alt="CodeFactor">
+      </a>
+    </p>
+</div>
 
-A database migration tool for Python.
+Wandern is a database migration tool written in Python.
+
 
 ## Supported Databases
 
 - PostgreSQL
 - SQLite
+- MySQL (coming soon)
+- MSSQL (coming soon)
 
 ## Commands
 

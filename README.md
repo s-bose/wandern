@@ -1,70 +1,72 @@
-Wandern is a small database migration tool for python.
+# Wandern
 
-# Database support
+A database migration tool for Python.
 
-Wandern, for now, only supports PostgreSQL. Support for the following dialects
-will be available soon.
+## Supported Databases
 
--   MySQL
--   Sqlite
--   MSSQL
+- PostgreSQL
+- SQLite
 
+## Commands
 
-# Available Commands
+### `wandern init [directory]`
+Initialize wandern for a new project.
 
-- wandern init - Initialize wandern for your project
-- wandern generate - Generate a new migration file
-- wandern upgrade - Apply migrations (coming soon)
-- wandern downgrade - Rollback migrations (coming soon)
-- wandern reset - Reset all migrations
-- wandern deinit - Remove wandern configuration
-- wandern graph - Display migration dependency graph
+**Options:**
+- `--interactive`, `-i` - Run initialization in interactive mode
+- `directory` - Path to the directory to contain migration scripts (optional)
 
+### `wandern generate`
+Generate a new migration file.
 
-## MVP
+**Options:**
+- `--message`, `-m` - Brief description of the migration
+- `--author`, `-a` - Author of the migration (defaults to system user)
+- `--tags`, `-t` - Comma-separated list of tags
+- `--prompt`, `-p` - Autogenerate migration using natural language prompt
 
-This is the document outlining the MVP (MInimum Viable Product) for Wandern.
-For the first initial release, it should be able to do the following:
+### `wandern up`
+Apply pending migrations to the database.
 
-1. Ability to generate skeleton migration scripts with UP and DOWN revisions.
-2. The migration scripts will be either SQL or Python.
-3. Ability to keep track of the migration graph. And resolve conflicts if there are diverging branches.
-4. Ability to migrate up and down a specific number of steps.
-5. Ability to reset all migrations.
+**Options:**
+- `--steps` - Number of migration steps to apply
+- `--tags`, `-t` - Apply only migrations with specified tags
+- `--author`, `-a` - Apply only migrations by specified author
 
-## Migration Graph Visualization
+### `wandern down`
+Roll back applied migrations.
 
-The `wandern graph` command provides a visual representation of your migration dependencies:
+**Options:**
+- `--steps` - Number of migration steps to roll back (default: all)
+
+### `wandern reset`
+Reset all migrations by rolling back all applied migrations.
+
+### `wandern browse`
+Browse database migrations interactively with filtering options.
+
+**Options:**
+- `--all`, `-A` - Include all migrations (both local and database)
+
+## Installation
 
 ```bash
-# Display the migration dependency tree
-wandern graph
-
-# Show only summary statistics
-wandern graph --summary
-
-# Override migration directory
-wandern graph --directory path/to/migrations
+pip install wandern
 ```
 
-This command helps you:
-- Understand migration execution order
-- Detect circular dependencies
-- Identify isolated migrations
-- Visualize the migration tree structure
+## Quick Start
 
+1. Initialize wandern in your project:
+   ```bash
+   wandern init
+   ```
 
-For Future releases:
-1. Ability to detect dialect-specific SQL code and suggest changes
+2. Generate your first migration:
+   ```bash
+   wandern generate --message "create users table"
+   ```
 
-
-## How to generate migration files
-
-1. run `wandern generate` to create an empty migration script with default file name.
-2. can be configured via wandern settings.
-3. can set custom file names in settings. For example, {version}_{description}_{timestamp}.sql
-
-
-### Fields that can be set
-1. `version` - version number for each migration, can be integer
-2.
+3. Apply migrations:
+   ```bash
+   wandern up
+   ```

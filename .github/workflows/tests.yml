@@ -30,7 +30,7 @@ jobs:
           name: coverage
           path: .coverage
 
-      - name: Codecov coverage
+      - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,9 +1,0 @@
-services:
-    database:
-        image: postgres:14
-        environment:
-            - POSTGRES_USER=wandern
-            - POSTGRES_PASSWORD=password
-            - POSTGRES_DB=wd
-        ports:
-            - 6432:5432

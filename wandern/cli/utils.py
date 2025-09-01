@@ -19,15 +19,15 @@ def create_migration_table(
     sources: list[str] | None = None,
     db_head_id: str | None = None,
 ) -> Table:
-    table = Table(show_header=True, header_style="bold blue")
+    table = Table(show_header=True, header_style="bold blue", expand=True)
 
-    table.add_column("ID", style="cyan", no_wrap=True, max_width=20)
-    table.add_column("Message", style="white", max_width=30)
-    table.add_column("Author", style="yellow", width=12)
-    table.add_column("Tags", style="blue", max_width=20)
-    table.add_column("Date", style="green", width=12)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Message", style="white")
+    table.add_column("Author", style="yellow")
+    table.add_column("Tags", style="blue")
+    table.add_column("Date", style="green")
     if sources:
-        table.add_column("Status", style="bright_magenta", width=12)
+        table.add_column("Status", style="bright_magenta")
 
     if not revisions:
         empty_row = ["No migrations found", "", "", "", ""]

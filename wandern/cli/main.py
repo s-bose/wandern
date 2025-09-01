@@ -104,7 +104,7 @@ def generate(
             "-m",
             help="A brief description of the migration",
         ),
-    ] = None,
+    ],
     author: Annotated[
         str | None,
         typer.Option(

@@ -27,7 +27,7 @@ REGEX_REVISION_ID: Pattern = re.compile(
     r"Revision\s+ID:\s*(?P<revision_id>\w+)", re.IGNORECASE
 )
 REGEX_REVISES: Pattern = re.compile(r"Revises:\s*(?P<revises>\w+)", re.IGNORECASE)
-REGEX_MESSAGE: Pattern = re.compile(r"Message:\s*(?P<message>[^\n]+)", re.IGNORECASE)
+REGEX_MESSAGE: Pattern = re.compile(r"Message:\s*(?P<message>[^\n]*)", re.IGNORECASE)
 REGEX_AUTHOR: Pattern = re.compile(r"Author:\s*(?P<author>[^\n]+)", re.IGNORECASE)
 REGEX_TAGS: Pattern = re.compile(r"Tags:\s*(?P<tags>[^\n]+)", re.IGNORECASE)
 
@@ -91,14 +91,17 @@ class CompatibleMatch:
 
     def span(self) -> tuple[int, int]:
         """Get match span (backward compatibility)."""
+        assert self._main_match is not None  # Guaranteed by __init__ validation
         return self._main_match.span()
 
     def start(self) -> int:
         """Get match start (backward compatibility)."""
+        assert self._main_match is not None  # Guaranteed by __init__ validation
         return self._main_match.start()
 
     def end(self) -> int:
         """Get match end (backward compatibility)."""
+        assert self._main_match is not None  # Guaranteed by __init__ validation
         return self._main_match.end()
 
 

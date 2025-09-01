@@ -87,11 +87,11 @@ class MigrationAgent(BaseAgent[MigrationSQL, str]):
     def __init__(
         self,
         config: Config,
-        max_tokens: int | None = None,
     ):
         super().__init__(
+            role="migration assistant",
+            task="generate SQL migration files",
             system_prompt=SYSTEM_PROMPT,
-            max_tokens=max_tokens,
         )
 
         self.config = config
@@ -130,7 +130,6 @@ class MigrationAgent(BaseAgent[MigrationSQL, str]):
         user_prompt: str,
     ):
         custom_prompt = self.create_structured_prompt(
-            self.system_prompt,
             user_prompt=user_prompt,
             additional_context=self.generate_additional_context(),
         )

@@ -1,6 +1,6 @@
 
 install:
-	uv sync --group dev --group test
+	uv sync --all-groups --all-extras
 
 test: install
 	uv run pytest tests/

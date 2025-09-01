@@ -37,7 +37,7 @@ def test_generate_migration_filename():
     # Test basic format
     current_datetime = datetime.now(timezone.utc)
     result = generate_migration_filename(
-        fmt="{day:02}_{month:>02}_{year}__{version}__{message}",
+        fmt="{day:02}_{month:02}_{year}__{version}__{message}",
         version="0001",
         message="test",
     )

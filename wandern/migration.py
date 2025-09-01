@@ -48,6 +48,10 @@ class MigrationService:
             self._validate_sequential_path(filtered_revisions, head)
             revisions = filtered_revisions
 
+        if not revisions:
+            rich.print("[green]Nothing to upgrade, already up to date[/green]")
+            return
+
         for revision in revisions:
             self.database.migrate_up(revision)
             rich.print(
@@ -87,6 +91,7 @@ class MigrationService:
         head = self.database.get_head_revision()
         if not head:
             # No migration to downgrade
+            rich.print("[red]Nothing to downgrade[/red]")
             return
 
         current = self.graph.get_node(head.revision_id)

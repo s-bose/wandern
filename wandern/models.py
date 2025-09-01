@@ -36,12 +36,7 @@ class FileTemplateArgs(TypedDict):
 
     # datetime
     epoch: float | None
-    year: str | None
-    month: str | None
-    day: str | None
-    hour: str | None
-    minute: str | None
-    second: str | None
+    datetime: datetime | None
 
 
 class Revision(BaseModel):

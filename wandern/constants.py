@@ -1,7 +1,7 @@
 import re
 from typing import Pattern
 
-DEFAULT_FILE_FORMAT = "{version}_{slug}_{message}"
+DEFAULT_FILE_FORMAT = "{version}-{datetime:%Y%m%d_%H%M%S}-{message}"
 
 DEFAULT_MIGRATION_TABLE = "wd_migrations"
 

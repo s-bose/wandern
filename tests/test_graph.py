@@ -42,7 +42,7 @@ def test_no_loops():
 
 
 def test_migration_files():
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
     assert graph
     last_migration = graph.get_last_migration()
@@ -52,7 +52,7 @@ def test_migration_files():
 
 
 def test_iter():
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
     assert graph
 
@@ -91,7 +91,7 @@ def test_iter():
 
 
 def test_iter_from():
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
     assert graph
 
@@ -106,7 +106,7 @@ def test_iter_from():
 
 def test_iter_from_invalid_revision():
     """Test iter_from with non-existent revision ID."""
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
 
     with pytest.raises(
@@ -117,7 +117,7 @@ def test_iter_from_invalid_revision():
 
 def test_get_node():
     """Test getting a specific node from the graph."""
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
 
     # Test existing node
@@ -133,7 +133,7 @@ def test_get_node():
 
 def test_first_property():
     """Test the first property returns the root node."""
-    migration_dir = "tests/migrations"
+    migration_dir = "tests/fixtures/migrations"
     graph = MigrationGraph.build(migration_dir)
 
     first_id = graph.first

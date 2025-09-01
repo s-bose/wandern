@@ -429,7 +429,7 @@ def test_regex_parse_with_groupdict():
 
 def test_default_constants():
     """Test that default constants have expected values."""
-    assert DEFAULT_FILE_FORMAT == "{version}_{slug}_{message}"
+    assert DEFAULT_FILE_FORMAT == "{version}-{datetime:%Y%m%d_%H%M%S}-{message}"
     assert DEFAULT_MIGRATION_TABLE == "wd_migrations"
     assert DEFAULT_CONFIG_FILENAME == ".wd.json"
 

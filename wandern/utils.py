@@ -44,12 +44,7 @@ def generate_migration_filename(
         "slug": slugify(message) if message else "",
         "message": message.replace(" ", "_") if message else None,
         "epoch": current_timestamp.timestamp(),
-        "year": str(current_timestamp.year),
-        "month": str(current_timestamp.month),
-        "day": str(current_timestamp.day),
-        "hour": str(current_timestamp.hour),
-        "minute": str(current_timestamp.minute),
-        "second": str(current_timestamp.second),
+        "datetime": current_timestamp,
         "author": author,
     }
     if not kwargs["version"] and not (kwargs["slug"] or kwargs["message"]):

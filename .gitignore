@@ -112,8 +112,3 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
-
-
-# Wandern migrations
-wd_migrations/
-migrations/

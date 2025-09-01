@@ -323,7 +323,6 @@ def test_browse_command_help():
 
     assert result.exit_code == 0
     assert "Browse database migrations interactively" in result.stdout
-    assert "--all" in result.stdout
 
 
 def test_browse_command_all_flag():

@@ -80,7 +80,7 @@ def init(
         migration_dir = os.path.abspath(migration_dir)
         if os.access(migration_dir, os.F_OK) and os.listdir(migration_dir):
             rich.print(
-                f"[red]Migration directory {migration_dir} already exists![/red]"
+                f"[red]Migration directory {migration_dir} already exists![/red]",
             )
             raise typer.Exit(code=1)
 

@@ -122,11 +122,13 @@ def generate_revision_id() -> str:
     return uuid.uuid4().hex[:8]
 
 
-def create_empty_migration(
+def create_migration(
     message: str | None,
     down_revision_id: str | None,
     author: str | None = None,
     tags: list[str] | None = None,
+    up_sql: str | None = None,
+    down_sql: str | None = None,
 ) -> Revision:
     version = generate_revision_id()
 
@@ -136,8 +138,8 @@ def create_empty_migration(
         message=message or "",
         tags=tags,
         author=author,
-        up_sql=None,
-        down_sql=None,
+        up_sql=up_sql,
+        down_sql=down_sql,
         created_at=datetime.now(),
     )
 

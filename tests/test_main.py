@@ -91,9 +91,7 @@ def test_generate_command_basic():
 
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
-            with patch(
-                "wandern.cli.main.create_empty_migration", return_value=mock_revision
-            ):
+            with patch("wandern.cli.main.create_migration", return_value=mock_revision):
                 mock_service = Mock()
                 mock_service.graph.get_last_migration.return_value = None
                 mock_service.save_migration.return_value = "test_migration.sql"
@@ -106,8 +104,8 @@ def test_generate_command_basic():
     assert "abc123" in result.stdout
 
 
-def test_generate_command_with_prompt():
-    """Test generate command with AI prompt"""
+def test_prompt_command():
+    """Test prompt command with AI generation"""
     mock_config = Config(dsn="sqlite:///test.db", migration_dir="/migrations")
     mock_revision = Revision(
         revision_id="abc123", down_revision_id=None, message="test migration"
@@ -126,9 +124,7 @@ def test_generate_command_with_prompt():
 
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
-            with patch(
-                "wandern.cli.main.create_empty_migration", return_value=mock_revision
-            ):
+            with patch("wandern.cli.main.create_migration", return_value=mock_revision):
                 with patch("wandern.cli.main.MigrationAgent") as mock_agent_class:
                     mock_service = Mock()
                     mock_service.graph.get_last_migration.return_value = None
@@ -140,15 +136,15 @@ def test_generate_command_with_prompt():
                     mock_agent_class.return_value = mock_agent
 
                     result = runner.invoke(
-                        app, ["generate", "--prompt"], input="Create a users table\n"
+                        app, ["prompt"], input="Create a users table\n"
                     )
 
     assert result.exit_code == 0
     assert "Generated migration file" in result.stdout
 
 
-def test_generate_command_with_prompt_error():
-    """Test generate command with AI prompt returning error"""
+def test_prompt_command_error():
+    """Test prompt command with AI generation returning error"""
     mock_config = Config(dsn="sqlite:///test.db", migration_dir="/migrations")
     mock_revision = Revision(
         revision_id="abc123", down_revision_id=None, message="test migration"
@@ -163,9 +159,7 @@ def test_generate_command_with_prompt_error():
 
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
-            with patch(
-                "wandern.cli.main.create_empty_migration", return_value=mock_revision
-            ):
+            with patch("wandern.cli.main.create_migration", return_value=mock_revision):
                 with patch("wandern.cli.main.MigrationAgent") as mock_agent_class:
                     mock_service = Mock()
                     mock_service.graph.get_last_migration.return_value = None
@@ -175,9 +169,7 @@ def test_generate_command_with_prompt_error():
                     mock_agent.generate_revision.return_value = mock_agent_response
                     mock_agent_class.return_value = mock_agent
 
-                    result = runner.invoke(
-                        app, ["generate", "--prompt"], input="Invalid prompt\n"
-                    )
+                    result = runner.invoke(app, ["prompt"], input="Invalid prompt\n")
 
     assert result.exit_code == 1
     assert "Error:" in result.stdout
@@ -187,7 +179,7 @@ def test_generate_command_with_prompt_error():
     "command_args,expected_output",
     [
         (["--message", "test", "--author", "testuser"], "testuser"),
-        (["--tags", "feature, database"], "feature, database"),
+        (["--message", "test", "--tags", "feature, database"], "feature, database"),
         (["--message", "test"], "Generated migration file"),
     ],
 )
@@ -200,9 +192,7 @@ def test_generate_command_options(command_args, expected_output):
 
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
-            with patch(
-                "wandern.cli.main.create_empty_migration", return_value=mock_revision
-            ):
+            with patch("wandern.cli.main.create_migration", return_value=mock_revision):
                 with patch("getpass.getuser", return_value="defaultuser"):
                     mock_service = Mock()
                     mock_service.graph.get_last_migration.return_value = None

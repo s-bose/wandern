@@ -15,7 +15,7 @@ from wandern.constants import DEFAULT_CONFIG_FILENAME
 from wandern.migration import MigrationService
 from wandern.models import Config
 from wandern.utils import (
-    create_empty_migration,
+    create_migration,
     load_config,
     save_config,
 )
@@ -95,6 +95,63 @@ def init(
         )
 
 
+@app.command(
+    name="prompt", help="Generate a new migration based on natural language prompt"
+)
+def prompt(
+    author: Annotated[
+        str | None,
+        typer.Option(
+            "--author",
+            "-a",
+            help="Optional author of the migration (default: system user)",
+        ),
+    ] = None,
+    tags: Annotated[
+        str | None,
+        typer.Option(
+            "--tags",
+            "-t",
+            help="Comma-separated list of tags for the migration",
+        ),
+    ] = None,
+):
+    config = load_config(config_path)
+    tags_list = tags.split(", ") if tags else []
+    if author is None:
+        author = getpass.getuser()  # get system username
+
+    migration_service = MigrationService(config)
+    last_migration = migration_service.graph.get_last_migration()
+    down_revision_id = last_migration.revision_id if last_migration else None
+
+    user_prompt = typer.prompt("Describe the migration")
+    agent = MigrationAgent(config=config)
+    response = agent.generate_revision(user_prompt)
+    if response.error:
+        rich.print(f"[red]Error:[/red] {response.error}")
+        raise typer.Exit(code=1)
+
+    revision = create_migration(
+        message=response.data.message,
+        author=author,
+        down_revision_id=down_revision_id,
+        tags=tags_list,
+        up_sql=response.data.up_sql,
+        down_sql=response.data.down_sql,
+    )
+
+    filename = migration_service.save_migration(revision)
+    rich.print(
+        f"[green]Generated migration file: {filename} for revision:[/green]"
+        f" [yellow]{revision.revision_id}[/yellow]"
+    )
+    rich.print(
+        "[yellow bold]Note: This migration was generated automatically."
+        " Please review and edit the migration script as necessary.[/yellow bold]"
+    )
+
+
 @app.command(name="generate", help="Generate a new migration")
 def generate(
     message: Annotated[
@@ -121,14 +178,6 @@ def generate(
             help="Comma-separated list of tags for the migration",
         ),
     ] = None,
-    prompt: Annotated[
-        bool,
-        typer.Option(
-            "--prompt",
-            "-p",
-            help="Autogenerate migration based on natural language prompt",
-        ),
-    ] = False,
 ):
     config = load_config(config_path)
     tags_list = tags.split(", ") if tags else []
@@ -139,41 +188,17 @@ def generate(
     last_migration = migration_service.graph.get_last_migration()
     down_revision_id = last_migration.revision_id if last_migration else None
 
-    revision = create_empty_migration(
+    revision = create_migration(
         message=message,
         author=author,
         down_revision_id=down_revision_id,
         tags=tags_list,
     )
 
-    if not prompt:
-        filename = migration_service.save_migration(revision)
-        rich.print(
-            f"[green]Generated migration file: {filename} for revision:[/green]"
-            f" [yellow]{revision.revision_id}[/yellow]"
-        )
-    else:
-        user_prompt = typer.prompt("Describe the migration")
-        agent = MigrationAgent(config=config)
-        response = agent.generate_revision(user_prompt)
-        if response.error:
-            rich.print(f"[red]Error:[/red] {response.error}")
-            raise typer.Exit(code=1)
-
-        revision.message = response.data.message or ""
-        revision.tags = tags_list
-        revision.up_sql = response.data.up_sql
-        revision.down_sql = response.data.down_sql
-
-        filename = migration_service.save_migration(revision)
-        rich.print(
-            f"[green]Generated migration file: {filename} for revision:[/green]"
-            f" [yellow]{revision.revision_id}[/yellow]"
-        )
-
+    filename = migration_service.save_migration(revision)
     rich.print(
-        "[yellow bold]Note: This migration was generated automatically."
-        " Please review and edit the migration script as necessary.[/yellow bold]"
+        f"[green]Generated migration file: {filename} for revision:[/green]"
+        f" [yellow]{revision.revision_id}[/yellow]"
     )
 
 

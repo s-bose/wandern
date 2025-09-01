@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -10,7 +10,7 @@ import typer
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.models import Config
 from wandern.utils import (
-    create_empty_migration,
+    create_migration,
     generate_migration_filename,
     generate_revision_id,
     load_config,
@@ -127,12 +127,10 @@ def test_generate_revision_id_uniqueness():
     assert len(revs) == len(set(revs))
 
 
-def test_create_empty_migration():
-    """Test empty migration creation."""
+def test_create_migration():
+    """Test migration creation."""
     # Basic migration
-    revision = create_empty_migration(
-        message="test migration", down_revision_id="abc123"
-    )
+    revision = create_migration(message="test migration", down_revision_id="abc123")
     assert revision.message == "test migration"
     assert revision.down_revision_id == "abc123"
     assert revision.up_sql is None
@@ -141,7 +139,7 @@ def test_create_empty_migration():
     assert isinstance(revision.created_at, datetime)
 
     # Migration with optional fields
-    revision = create_empty_migration(
+    revision = create_migration(
         message="test with options",
         down_revision_id=None,
         author="test author",
@@ -152,7 +150,7 @@ def test_create_empty_migration():
     assert revision.down_revision_id is None
 
     # Migration with empty message
-    revision = create_empty_migration(message=None, down_revision_id="abc")
+    revision = create_migration(message=None, down_revision_id="abc")
     assert revision.message == ""
 
 
@@ -188,8 +186,12 @@ def test_parse_sql_file_content_full():
                 "tag1",
                 " tag2",
             ]  # Note: there's a space before tag2
-            assert revision.up_sql and "CREATE TABLE test" in revision.up_sql
-            assert revision.down_sql and "DROP TABLE test" in revision.down_sql
+            assert (
+                revision.up_sql is not None and "CREATE TABLE test" in revision.up_sql
+            )
+            assert (
+                revision.down_sql is not None and "DROP TABLE test" in revision.down_sql
+            )
             assert isinstance(revision.created_at, datetime)
         finally:
             os.unlink(f.name)

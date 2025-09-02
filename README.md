@@ -14,7 +14,7 @@
 Wandern is a database migration tool written in Python.
 Wandern provides a simple, straight-forward interface for creating and managing migrations with plain SQL files, giving you the flexibility to add your own SQL statements.
 
-![wandern](assets/demo.gif)
+![](assets/demo.gif)
 
 ## Installation
 

@@ -190,6 +190,8 @@ Currently only supports OpenAI (must provide `OPENAI_API_KEY`) and Google (must 
 
 You need to install additional dependencies with the extras `openai` or `google-genai` respectively.
 
+![wandern prompt](assets/prompt.gif)
+
 **Options:**
 - `--author`, `-a` - Author of the migration (defaults to system user)
 - `--tags`, `-t` - Comma-separated list of tags (optional)
@@ -197,6 +199,8 @@ You need to install additional dependencies with the extras `openai` or `google-
 
 ### `wandern up`
 Apply pending migrations to the database.
+
+![wandern up](assets/upgrade.gif)
 
 This command compares the local migration file versions against the revisions inserted into the database, and applies anything that's missing.
 If run without specifying the number of steps, it will apply all the migrations from the beginning.
@@ -216,6 +220,8 @@ There is also an error raised if there is any circular dependency between two lo
 ### `wandern down`
 Roll back applied migrations.
 
+![wandern down](assets/downgrade.gif)
+
 Just like `wandern up`, you can specify the number of steps to the command.
 The command checks the migration entries in the database and finds their corresponding files in the local migration folder and runs their `DOWN` SQL expressions sequentially until the number of steps is satisfied, or everything is downgraded to the very beginning.
 
@@ -232,6 +238,8 @@ This is the same as running `wandern down` without any steps.
 ### `wandern browse`
 Browse database migrations interactively with filtering options.
 You can filter by author name, select one or more tags, or by created date.
+
+![wandern browse](assets/browse.gif)
 
 **Options:**
 - `--all`, `-A` - Include all migrations (both local and database)

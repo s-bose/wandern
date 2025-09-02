@@ -1,6 +1,6 @@
 [project]
 name = "wandern"
-version = "0.0.1"
+version = "0.0.2"
 authors = [{ name = "Shiladitya Bose", email = "shiladitya_basu@live.com" }]
 description = "Wandern is a small, no-nonsense database migration tool for python"
 readme = "README.md"
@@ -36,8 +36,9 @@ google-genai = ["pydantic-ai-slim[google]>=0.7.4"]
 requires = ["setuptools>=80.9.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["wandern"]
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]
 
 [[tool.mypy.overrides]]
 module = ["graphviz"]

@@ -169,14 +169,16 @@ def save_config(config: Config, path: str | Path) -> None:
         file.write(config.model_dump_json(indent=4))
 
 
-def exception_handler(exception: type[Exception], exit_code: int = 1):
+def exception_handler(
+    exception: type[Exception], message: str | None = None, exit_code: int = 1
+):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except exception as exc:
-                rich.print(f"[red]Error:[/red] {exc}")
+                rich.print(f"[red]Error:[/red] {message or exc}")
                 raise typer.Exit(code=exit_code) from exc
 
         return wrapper

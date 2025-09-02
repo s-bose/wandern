@@ -29,11 +29,11 @@ def create_model():
     """Create an AI model with lazy imports and proper error handling."""
     if os.getenv("OPENAI_API_KEY"):
         try:
-            from pydantic_ai.models.openai import OpenAIModel
+            from pydantic_ai.models.openai import OpenAIResponsesModel
             from pydantic_ai.providers.openai import OpenAIProvider
 
             openai_provider = OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
-            return OpenAIModel(model_name="gpt-4o", provider=openai_provider)
+            return OpenAIResponsesModel(model_name="gpt-4o", provider=openai_provider)
         except ImportError:
             raise ImportError(
                 "Please install openai dependencies with `wandern[openai]`"

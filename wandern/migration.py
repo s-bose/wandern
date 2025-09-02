@@ -5,6 +5,7 @@ import rich
 
 from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.databases.provider import get_database_impl
+from wandern.exceptions import ConnectError
 from wandern.graph import MigrationGraph
 from wandern.models import Config, Revision
 from wandern.templates.engine import generate_template
@@ -15,7 +16,7 @@ class MigrationService:
     def __init__(self, config: Config):
         self.config = config
         if not config.dialect or not config.dsn:
-            raise ValueError("No database connection string provided")
+            raise ConnectError("No database connection string provided")
 
         self.database = get_database_impl(config.dialect, config=config)
         self.graph = MigrationGraph.build(config.migration_dir)

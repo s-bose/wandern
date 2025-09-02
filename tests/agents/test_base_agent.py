@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel
 from pydantic_ai.agent import Agent
 from pydantic_ai.models.google import GoogleModel
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIResponsesModel
 from pydantic_ai.models.test import TestModel
 
 from wandern.agents.base_agent import BaseAgent, create_model
@@ -16,7 +16,7 @@ def test_create_model():
     os.environ["OPENAI_API_KEY"] = "test"
     model = create_model()
     assert model is not None
-    assert isinstance(model, OpenAIModel)
+    assert isinstance(model, OpenAIResponsesModel)
     os.environ.pop("OPENAI_API_KEY")
 
     os.environ["GOOGLE_API_KEY"] = "test"

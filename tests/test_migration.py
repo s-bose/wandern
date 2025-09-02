@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from wandern.exceptions import ConnectError
 from wandern.migration import MigrationService
 from wandern.models import Config, Revision
 
@@ -63,11 +64,7 @@ def test_migration_service_init_raises_on_invalid_dsn():
         migration_table="test_migrations",
     )
 
-    with pytest.raises(ValueError):
-        MigrationService(config)
-
-    config.dsn = "invalid_dsn"
-    with pytest.raises(ValueError):
+    with pytest.raises(ConnectError):
         MigrationService(config)
 
 

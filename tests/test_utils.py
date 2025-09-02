@@ -11,6 +11,7 @@ from wandern.constants import DEFAULT_FILE_FORMAT
 from wandern.models import Config
 from wandern.utils import (
     create_migration,
+    exception_handler,
     generate_migration_filename,
     generate_revision_id,
     load_config,
@@ -420,3 +421,96 @@ def test_save_config():
                 assert saved_data["migration_table"] == "wd_migrations"
         finally:
             os.unlink(f.name)
+
+
+def test_exception_handler_basic():
+    """Test exception_handler decorator with basic functionality."""
+
+    @exception_handler(ValueError)
+    def function_that_raises_value_error():
+        raise ValueError("Test error message")
+
+    @exception_handler(ValueError)
+    def function_that_works():
+        return "success"
+
+    # Test that the decorator catches the specified exception
+    with pytest.raises(typer.Exit) as exc_info:
+        function_that_raises_value_error()
+    assert exc_info.value.exit_code == 1
+
+    # Test that the decorator doesn't interfere with normal function execution
+    result = function_that_works()
+    assert result == "success"
+
+
+def test_exception_handler_custom_exit_code():
+    """Test exception_handler decorator with custom exit code."""
+
+    @exception_handler(RuntimeError, exit_code=42)
+    def function_that_raises_runtime_error():
+        raise RuntimeError("Custom error")
+
+    with pytest.raises(typer.Exit) as exc_info:
+        function_that_raises_runtime_error()
+    assert exc_info.value.exit_code == 42
+
+
+def test_exception_handler_does_not_catch_other_exceptions():
+    """Test that exception_handler only catches specified exception types."""
+
+    @exception_handler(ValueError)
+    def function_that_raises_runtime_error():
+        raise RuntimeError("This should not be caught")
+
+    # The decorator should not catch RuntimeError since it's configured for
+    # ValueError
+    with pytest.raises(RuntimeError, match="This should not be caught"):
+        function_that_raises_runtime_error()
+
+
+def test_exception_handler_with_function_arguments():
+    """Test exception_handler with functions that take arguments."""
+
+    @exception_handler(ZeroDivisionError)
+    def divide(a, b):
+        return a / b
+
+    # Test normal operation
+    result = divide(10, 2)
+    assert result == 5.0
+
+    # Test exception handling
+    with pytest.raises(typer.Exit) as exc_info:
+        divide(10, 0)
+    assert exc_info.value.exit_code == 1
+
+
+def test_exception_handler_multiple_exception_types():
+    """Test exception_handler with inheritance (catching parent exceptions)."""
+
+    @exception_handler(Exception)  # This should catch all exceptions
+    def function_that_raises_value_error():
+        raise ValueError("Test error")
+
+    with pytest.raises(typer.Exit) as exc_info:
+        function_that_raises_value_error()
+    assert exc_info.value.exit_code == 1
+
+
+def test_exception_handler_error_message_format(capsys):
+    """Test that exception_handler prints error messages correctly."""
+
+    @exception_handler(ValueError)
+    def function_with_specific_error():
+        raise ValueError("Specific error message")
+
+    with pytest.raises(typer.Exit):
+        function_with_specific_error()
+
+    # Check that the error message was printed to stderr in the expected format
+    captured = capsys.readouterr()
+    # The rich.print output might go to stdout or stderr, let's check both
+    output = captured.out + captured.err
+    assert "Error:" in output
+    assert "Specific error message" in output

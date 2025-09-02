@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import Literal
 
 import rich
 
@@ -90,6 +89,7 @@ class MigrationService:
         self,
         steps: int | None = None,
     ):
+        self.database.create_table_migration()
         head = self.database.get_head_revision()
         if not head:
             # No migration to downgrade

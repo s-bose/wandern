@@ -247,6 +247,7 @@ def upgrade(
 
 
 @app.command(name="down", help="Downgrade database migrations")
+@exception_handler(ConnectError)
 def downgrade(
     steps: Annotated[
         int | None,
@@ -262,6 +263,7 @@ def downgrade(
 
 
 @app.command(help="Reset all migrations")
+@exception_handler(ConnectError)
 def reset():
     """Reset all migrations.
     Rolls back all the migrations applied to the database
@@ -275,6 +277,8 @@ def reset():
 
 
 @app.command(help="Browse database migrations interactively")
+@exception_handler(ValueError)
+@exception_handler(ConnectError)
 def browse(
     all_migrations: Annotated[
         bool,
@@ -290,6 +294,7 @@ def browse(
     service = MigrationService(config)
     console = Console(force_terminal=True)
 
+    service.database.create_table_migration()
     db_head = service.database.get_head_revision()
     db_head_id = db_head.revision_id if db_head else None
 

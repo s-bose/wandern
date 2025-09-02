@@ -55,6 +55,22 @@ def test_migration_service_init(mock_config):
         mock_graph_build.assert_called_once_with(mock_config.migration_dir)
 
 
+def test_migration_service_init_raises_on_invalid_dsn():
+    config = Config(
+        dsn="",
+        migration_dir="/test/migrations",
+        file_format="{version}_{slug}_{message}",
+        migration_table="test_migrations",
+    )
+
+    with pytest.raises(ValueError):
+        MigrationService(config)
+
+    config.dsn = "invalid_dsn"
+    with pytest.raises(ValueError):
+        MigrationService(config)
+
+
 def test_upgrade_first_migration(mock_config, sample_revision):
     """Test upgrade when no migrations have been applied yet."""
     mock_database = Mock()

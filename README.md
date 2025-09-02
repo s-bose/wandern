@@ -11,7 +11,7 @@
     </p>
 </div>
 
-Wandern is a database migration tool written in Python.
+Wandern (vrb. german for `hiking`, or `migrating`) is a database migration tool written in Python.
 Wandern provides a simple, straight-forward interface for creating and managing migrations with plain SQL files, giving you the flexibility to add your own SQL statements.
 
 ![Wandern demo](assets/demo.gif)
@@ -119,8 +119,6 @@ pip install wandern[google-genai]
 You must provide your own API key (e.g. `OPENAI_API_KEY` or `GOOGLE_API_KEY` or `GEMINI_API_KEY`) in your environment variable to use it.
 
 To see all the commands, see [Available commands](#available-commands)
-
-
 
 
 ## Supported Databases

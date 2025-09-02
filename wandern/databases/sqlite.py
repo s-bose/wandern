@@ -25,7 +25,10 @@ class SQLiteProvider(BaseProvider):
             conn.row_factory = sqlite3.Row
             return conn
         except Exception as exc:
-            raise ConnectError("Failed to connect to the database") from exc
+            raise ConnectError(
+                "Failed to connect to the database"
+                f"\nIs your database server running on '{self.config.dsn}'?"
+            ) from exc
 
     def create_table_migration(self) -> None:
         query = f"""
@@ -71,9 +74,11 @@ class SQLiteProvider(BaseProvider):
                 message=row["message"] or "",
                 tags=tags,
                 author=row["author"],
-                created_at=datetime.fromisoformat(row["created_at"])
-                if row["created_at"]
-                else datetime.now(),
+                created_at=(
+                    datetime.fromisoformat(row["created_at"])
+                    if row["created_at"]
+                    else datetime.now()
+                ),
             )
 
     def migrate_up(self, revision: Revision) -> int:
@@ -170,9 +175,11 @@ class SQLiteProvider(BaseProvider):
                         message=row["message"] or "",
                         tags=tags_list,
                         author=row["author"],
-                        created_at=datetime.fromisoformat(row["created_at"])
-                        if row["created_at"]
-                        else datetime.now(),
+                        created_at=(
+                            datetime.fromisoformat(row["created_at"])
+                            if row["created_at"]
+                            else datetime.now()
+                        ),
                     )
                 )
 

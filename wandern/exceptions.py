@@ -18,5 +18,5 @@ class CycleDetected(WandernException):
     pass
 
 
-class ConnectError(BaseException):
+class ConnectError(WandernException):
     pass

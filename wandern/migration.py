@@ -15,6 +15,8 @@ from wandern.utils import generate_migration_filename
 class MigrationService:
     def __init__(self, config: Config):
         self.config = config
+        if not config.dialect or not config.dsn:
+            raise ValueError("No database connection string provided")
         self.database = get_database_impl(config.dialect, config=config)
         self.graph = MigrationGraph.build(config.migration_dir)
 
@@ -146,14 +148,14 @@ class MigrationService:
         author: str | None = None,
         tags: list[str] | None = None,
         created_at: datetime | None = None,
-    ) -> list[tuple[Revision, Literal["applied", "not applied"]]]:
+    ) -> list[tuple[Revision, str]]:
         db_migrations = self.database.list_migrations(
             author=author, tags=tags, created_at=created_at
         )
         db_revision_ids = {rev.revision_id for rev in db_migrations}
         local_migrations = list(self.graph.iter())
 
-        combined = list[tuple[Revision, Literal["applied", "not applied"]]]()
+        combined = list[tuple[Revision, str]]()
 
         for rev in db_migrations:
             combined.append((rev, "applied"))

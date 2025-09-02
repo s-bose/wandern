@@ -9,7 +9,6 @@ import typer
 from questionary import checkbox, path, select, text
 from rich.console import Console
 
-from wandern.agents.migration_agent import MigrationAgent
 from wandern.cli.utils import date_validator, display_migrations_state
 from wandern.constants import DEFAULT_CONFIG_FILENAME, DEFAULT_MIGRATION_TABLE
 from wandern.exceptions import ConnectError
@@ -114,6 +113,8 @@ def prompt(
         ),
     ] = None,
 ):
+    from wandern.agents.migration_agent import MigrationAgent
+
     config = load_config(config_path)
     tags_list = tags.split(", ") if tags else []
     if author is None:

@@ -127,7 +127,9 @@ def test_prompt_command():
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
             with patch("wandern.cli.main.create_migration", return_value=mock_revision):
-                with patch("wandern.cli.main.MigrationAgent") as mock_agent_class:
+                with patch(
+                    "wandern.agents.migration_agent.MigrationAgent"
+                ) as mock_agent_class:
                     mock_service = Mock()
                     mock_service.graph.get_last_migration.return_value = None
                     mock_service.save_migration.return_value = "test_migration.sql"
@@ -162,7 +164,9 @@ def test_prompt_command_error():
     with patch("wandern.cli.main.load_config", return_value=mock_config):
         with patch("wandern.cli.main.MigrationService") as mock_service_class:
             with patch("wandern.cli.main.create_migration", return_value=mock_revision):
-                with patch("wandern.cli.main.MigrationAgent") as mock_agent_class:
+                with patch(
+                    "wandern.agents.migration_agent.MigrationAgent"
+                ) as mock_agent_class:
                     mock_service = Mock()
                     mock_service.graph.get_last_migration.return_value = None
                     mock_service_class.return_value = mock_service

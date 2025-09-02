@@ -1,6 +1,6 @@
 [project]
 name = "wandern"
-version = "0.0.2"
+version = "0.0.3"
 authors = [{ name = "Shiladitya Bose", email = "shiladitya_basu@live.com" }]
 description = "Wandern is a small, no-nonsense database migration tool for python"
 readme = "README.md"

@@ -36,6 +36,9 @@ google-genai = ["pydantic-ai-slim[google]>=0.7.4"]
 requires = ["setuptools>=80.9.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["wandern"]
+
 [[tool.mypy.overrides]]
 module = ["graphviz"]
 ignore_missing_imports = true

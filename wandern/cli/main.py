@@ -11,7 +11,6 @@ from rich.console import Console
 
 from wandern.cli.utils import date_validator, display_migrations_state
 from wandern.constants import DEFAULT_CONFIG_FILENAME, DEFAULT_MIGRATION_TABLE
-from wandern.exceptions import ConnectError
 from wandern.migration import MigrationService
 from wandern.models import Config
 from wandern.utils import create_migration, exception_handler, load_config, save_config
@@ -94,7 +93,6 @@ def init(
 @app.command(
     name="prompt", help="Generate a new migration based on natural language prompt"
 )
-@exception_handler(ValueError)
 def prompt(
     author: Annotated[
         str | None,
@@ -207,7 +205,7 @@ def generate(
 
 
 @app.command(name="up", help="Upgrade database migrations")
-@exception_handler(ConnectError)
+@exception_handler(ValueError)
 def upgrade(
     steps: Annotated[
         int | None,
@@ -248,7 +246,7 @@ def upgrade(
 
 
 @app.command(name="down", help="Downgrade database migrations")
-@exception_handler(ConnectError)
+@exception_handler(ValueError)
 def downgrade(
     steps: Annotated[
         int | None,
@@ -264,7 +262,6 @@ def downgrade(
 
 
 @app.command(help="Reset all migrations")
-@exception_handler(ConnectError)
 def reset():
     """Reset all migrations.
     Rolls back all the migrations applied to the database
@@ -279,7 +276,6 @@ def reset():
 
 @app.command(help="Browse database migrations interactively")
 @exception_handler(ValueError)
-@exception_handler(ConnectError)
 def browse(
     all_migrations: Annotated[
         bool,

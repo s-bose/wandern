@@ -16,6 +16,7 @@ class MigrationService:
         self.config = config
         if not config.dialect or not config.dsn:
             raise ValueError("No database connection string provided")
+
         self.database = get_database_impl(config.dialect, config=config)
         self.graph = MigrationGraph.build(config.migration_dir)
 

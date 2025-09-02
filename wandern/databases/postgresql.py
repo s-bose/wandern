@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError as exc:
     raise ImportError(
         "psycopg is required for PostgreSQL support. "
-        "Install it with: pip install 'wandern[postgresql]'"
+        'Install it with: pip install "wandern[postgresql]"'
     ) from exc
 
 from wandern.databases.base import BaseProvider

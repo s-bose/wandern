@@ -7,12 +7,10 @@ from pydantic import BaseModel
 
 try:
     from pydantic_ai.agent import Agent
-    from pydantic_ai.models import Model
-    from pydantic_ai.tools import Tool
 except ModuleNotFoundError as exc:
     raise ImportError(
         "pydantic_ai is required to use agents. "
-        "Install it with: pip install 'wandern[openai]' or 'wandern[google-genai]'"
+        "Install it with: pip install wandern[openai] or wandern[google-genai]"
     ) from exc
 
 from wandern.agents.constants import DANGEROUS_PATTERNS
@@ -27,7 +25,8 @@ class AgentResponse(BaseModel, Generic[_DataT, _ErrorT]):
     error: _ErrorT | None = None
 
 
-def create_model() -> Model:
+def create_model():
+    """Create an AI model with lazy imports and proper error handling."""
     if os.getenv("OPENAI_API_KEY"):
         try:
             from pydantic_ai.models.openai import OpenAIModel
@@ -36,8 +35,9 @@ def create_model() -> Model:
             openai_provider = OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
             return OpenAIModel(model_name="gpt-4o", provider=openai_provider)
         except ImportError:
-            print("Please install openai dependencies with `wandern[openai]`")
-            raise
+            raise ImportError(
+                "Please install openai dependencies with `wandern[openai]`"
+            )
     elif os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"):
         try:
             from pydantic_ai.models.google import GoogleModel
@@ -48,8 +48,9 @@ def create_model() -> Model:
             )
             return GoogleModel(model_name="gemini-2.5-flash", provider=google_provider)
         except ImportError:
-            print("Please install google dependencies with `wandern[google]`")
-            raise
+            raise ImportError(
+                "Please install google dependencies with `wandern[google-genai]`"
+            )
     else:
         raise ValueError(
             "No supported API key found, please set either `OPENAI_API_KEY` or `GOOGLE_API_KEY`"
@@ -62,7 +63,7 @@ class BaseAgent(Generic[_DataT, _ErrorT]):
         role: str,
         task: str,
         system_prompt: str | Sequence[str],
-        tools: list[Tool] | None = None,
+        tools=None,
     ):
         self.model = create_model()
         self.system_prompt = self.create_system_prompt(

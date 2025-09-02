@@ -1,0 +1,30 @@
+
+name: Publish to Test PyPI
+
+on:
+    workflow_dispatch:
+
+jobs:
+    publish:
+        name: Run Release Test PyPi
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install UV
+              uses: astral-sh/setup-uv@v6
+
+            - name: Install Project
+              run: uv sync --locked --all-groups --all-extras
+
+            - name: Build Project
+              run: uv build
+
+            - name: Run publish
+              env:
+                TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+              run: uv publish --token $TEST_PYPI_TOKEN --publish-url https://test.pypi.org/legacy/
+
+            - name: Verify Install
+              run: $ uv run --with wandern --no-project -- python -c "import wandern"

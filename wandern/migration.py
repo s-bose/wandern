@@ -106,6 +106,7 @@ class MigrationService:
         while current and (steps is None or count < steps):
             self.database.migrate_down(current)
             if not current.down_revision_id:
+                rich.print(f"(DOWN) [red]{current.revision_id} -> None[/red]")
                 break
             rich.print(
                 f"(DOWN) [red]{current.revision_id} -> {current.down_revision_id}[/red]"

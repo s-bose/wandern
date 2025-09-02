@@ -14,6 +14,7 @@
 Wandern is a database migration tool written in Python.
 Wandern provides a simple, straight-forward interface for creating and managing migrations with plain SQL files, giving you the flexibility to add your own SQL statements.
 
+![wandern](assets/demo.gif)
 
 ## Installation
 
@@ -177,6 +178,16 @@ Generated migration files do not contain any SQL. You have to write your own UP 
 
 **Options:**
 - `--message`, `-m` - Brief description of the migration (required)
+- `--author`, `-a` - Author of the migration (defaults to system user)
+- `--tags`, `-t` - Comma-separated list of tags (optional)
+
+### `wandern prompt`
+Generate a filled migration file from natural language prompt using LLM Agents.
+Currently only supports OpenAI (must provide `OPENAI_API_KEY`) and Google (must provide `GOOGLE_API_KEY` or `GEMINI_API_KEY`).
+
+You need to install additional dependencies with the extras `openai` or `google-genai` respectively.
+
+**Options:**
 - `--author`, `-a` - Author of the migration (defaults to system user)
 - `--tags`, `-t` - Comma-separated list of tags (optional)
 

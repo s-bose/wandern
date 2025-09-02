@@ -138,6 +138,9 @@ Initialize wandern for a new project.
 
 If you do not specify a `directory`, Wandern will assume the default migration folder name (`wd_migrations`) in your current working directory.
 
+If you select `--interactive`, you will be able to interactively configure the wandern settings.
+
+![wandern init](assets/init.gif)
 
 **Options:**
 - `--interactive`, `-i` - Run initialization in interactive mode

@@ -25,7 +25,8 @@ class Config(BaseModel):
     @property
     def dialect(self):
         _dialect = self.dsn.split("://")[0]
-        return DatabaseProviders(_dialect)
+        if _dialect:
+            return DatabaseProviders(_dialect)
 
 
 class FileTemplateArgs(TypedDict):

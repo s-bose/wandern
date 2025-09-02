@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 from datetime import UTC, datetime
+from functools import wraps
 from pathlib import Path
 from string import Formatter
 
@@ -166,3 +167,18 @@ def save_config(config: Config, path: str | Path) -> None:
 
     with open(config_dir, "w", encoding="utf-8") as file:
         file.write(config.model_dump_json(indent=4))
+
+
+def exception_handler(exception: type[Exception], exit_code: int = 1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exception as exc:
+                rich.print(f"[red]Error:[/red] {exc}")
+                raise typer.Exit(code=exit_code) from exc
+
+        return wrapper
+
+    return decorator

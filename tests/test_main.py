@@ -78,8 +78,10 @@ def test_init_command_migration_directory_exists():
                     result = runner.invoke(app, ["init"])
 
         assert result.exit_code == 1
-        assert "Migration directory" in result.stdout
-        assert "already exists" in result.stdout
+
+        stdout = result.stdout.replace("\n", "")
+        assert "Migration directory" in stdout
+        assert "already exists" in stdout
 
 
 def test_generate_command_basic():

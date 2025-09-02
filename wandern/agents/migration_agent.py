@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from wandern.agents.base_agent import AgentResponse
@@ -6,8 +5,6 @@ from wandern.graph import MigrationGraph
 from wandern.models import Config
 
 from .base_agent import BaseAgent
-
-load_dotenv()
 
 
 class MigrationSQL(BaseModel):

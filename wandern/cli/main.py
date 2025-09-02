@@ -11,14 +11,11 @@ from rich.console import Console
 
 from wandern.agents.migration_agent import MigrationAgent
 from wandern.cli.utils import date_validator, display_migrations_state
-from wandern.constants import DEFAULT_CONFIG_FILENAME
+from wandern.constants import DEFAULT_CONFIG_FILENAME, DEFAULT_MIGRATION_TABLE
+from wandern.exceptions import ConnectError
 from wandern.migration import MigrationService
 from wandern.models import Config
-from wandern.utils import (
-    create_migration,
-    load_config,
-    save_config,
-)
+from wandern.utils import create_migration, exception_handler, load_config, save_config
 
 app = typer.Typer(rich_markup_mode="rich", no_args_is_help=True)
 config_path = Path.cwd() / DEFAULT_CONFIG_FILENAME
@@ -76,11 +73,11 @@ def init(
         )
 
     else:
-        migration_dir = directory or os.path.join(os.getcwd(), "migrations")
+        migration_dir = directory or os.path.join(os.getcwd(), DEFAULT_MIGRATION_TABLE)
         migration_dir = os.path.abspath(migration_dir)
         if os.access(migration_dir, os.F_OK) and os.listdir(migration_dir):
             rich.print(
-                f"[red]Migration directory {migration_dir} already exists![/red]"
+                f"[red]Migration directory {migration_dir} already exists![/red]",
             )
             raise typer.Exit(code=1)
 
@@ -98,6 +95,7 @@ def init(
 @app.command(
     name="prompt", help="Generate a new migration based on natural language prompt"
 )
+@exception_handler(ValueError)
 def prompt(
     author: Annotated[
         str | None,
@@ -127,7 +125,11 @@ def prompt(
 
     user_prompt = typer.prompt("Describe the migration")
     agent = MigrationAgent(config=config)
-    response = agent.generate_revision(user_prompt)
+
+    console = Console()
+    with console.status("[bold green]Generating migration...", spinner="dots"):
+        response = agent.generate_revision(user_prompt)
+
     if response.error:
         rich.print(f"[red]Error:[/red] {response.error}")
         raise typer.Exit(code=1)
@@ -153,6 +155,7 @@ def prompt(
 
 
 @app.command(name="generate", help="Generate a new migration")
+@exception_handler(ValueError)
 def generate(
     message: Annotated[
         str | None,
@@ -203,6 +206,7 @@ def generate(
 
 
 @app.command(name="up", help="Upgrade database migrations")
+@exception_handler(ConnectError)
 def upgrade(
     steps: Annotated[
         int | None,
@@ -243,6 +247,7 @@ def upgrade(
 
 
 @app.command(name="down", help="Downgrade database migrations")
+@exception_handler(ConnectError)
 def downgrade(
     steps: Annotated[
         int | None,
@@ -258,6 +263,7 @@ def downgrade(
 
 
 @app.command(help="Reset all migrations")
+@exception_handler(ConnectError)
 def reset():
     """Reset all migrations.
     Rolls back all the migrations applied to the database
@@ -271,6 +277,8 @@ def reset():
 
 
 @app.command(help="Browse database migrations interactively")
+@exception_handler(ValueError)
+@exception_handler(ConnectError)
 def browse(
     all_migrations: Annotated[
         bool,
@@ -286,6 +294,7 @@ def browse(
     service = MigrationService(config)
     console = Console(force_terminal=True)
 
+    service.database.create_table_migration()
     db_head = service.database.get_head_revision()
     db_head_id = db_head.revision_id if db_head else None
 
@@ -299,7 +308,7 @@ def browse(
     tags = sorted(set(tag for rev in all_revisions for tag in rev.tags or []))
 
     author_filter = None
-    tags_filter = []
+    tags_filter: list[str] = []
     date_filter = None
 
     while True:
@@ -310,7 +319,9 @@ def browse(
                 created_at=date_filter,
             )
             filtered_revisions = [rev for rev, _ in combined_filtered]
-            filtered_sources = [source for _, source in combined_filtered]
+            filtered_sources: list[str] | None = [
+                source for _, source in combined_filtered
+            ]
         else:
             filtered_revisions = service.filter_migrations(
                 author=author_filter,

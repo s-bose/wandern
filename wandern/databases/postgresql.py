@@ -23,7 +23,10 @@ class PostgresProvider(BaseProvider):
                 row_factory=dict_row,  # type: ignore
             )
         except Exception as exc:
-            raise ConnectError("Failed to connect to the database") from exc
+            raise ConnectError(
+                "Failed to connect to the database"
+                f"\nIs your database server running on '{self.config.dsn}'?"
+            ) from exc
 
     def create_table_migration(self):
         query = SQL(

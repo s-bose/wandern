@@ -14,9 +14,19 @@
 Wandern (vrb. german for `hiking`, or `migrating`) is a database migration tool written in Python.
 Wandern provides a simple, straight-forward interface for creating and managing migrations with plain SQL files, giving you the flexibility to add your own SQL statements.
 
+## 🚀 Features
 ![Wandern demo](assets/demo.gif)
 
-## Installation
+- Simple and intuitive CLI
+- Supports multiple database backends (SQLite, PostgreSQL)
+- Straight-forward migration management with plain SQL
+- Automatic detection of circular dependencies and divergent migrations
+- Ability to selectively apply migrations based on author or tags
+- Built-in support for LLMs to auto-generate migrations from plaintext prompts (requires API key)
+- Live tabular view of applied and unapplied migrations
+
+
+## 📦 Installation
 
 **PIP**
 
@@ -45,7 +55,7 @@ pip install "wandern[postgresql]"
 uv add wandern --extra postgresql
 ```
 
-## Quick Start
+## ⚡️ Quick Start
 
 1. Initialize wandern in your project:
    ```bash
@@ -121,14 +131,14 @@ You must provide your own API key (e.g. `OPENAI_API_KEY` or `GOOGLE_API_KEY` or 
 To see all the commands, see [Available commands](#available-commands)
 
 
-## Supported Databases
+## 🗄️ Supported Databases
 
 - SQLite
 - PostgreSQL
 - MySQL (coming soon)
 - MSSQL (coming soon)
 
-## Available Commands
+## 🛠️ Available Commands
 
 ### `wandern init [directory]`
 Initialize wandern for a new project.

@@ -4,9 +4,16 @@ from abc import abstractmethod
 from typing import Generic, Sequence, TypeVar, final
 
 from pydantic import BaseModel
-from pydantic_ai.agent import Agent
-from pydantic_ai.models import Model
-from pydantic_ai.tools import Tool
+
+try:
+    from pydantic_ai.agent import Agent
+    from pydantic_ai.models import Model
+    from pydantic_ai.tools import Tool
+except ModuleNotFoundError as exc:
+    raise ImportError(
+        "pydantic_ai is required to use agents. "
+        "Install it with: pip install 'wandern[openai]' or 'wandern[google-genai]'"
+    ) from exc
 
 from wandern.agents.constants import DANGEROUS_PATTERNS
 

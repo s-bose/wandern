@@ -28,7 +28,9 @@ Homepage = "https://github.com/s-bose/wandern"
 Issues = "https://github.com/s-bose/wandern/issues"
 
 [project.optional-dependencies]
-postgresql = ["psycopg[binary]>=3.2.9"]
+postgresql = [
+    "psycopg[binary]>=3.2.9",
+]
 openai = ["pydantic-ai-slim[openai]>=0.7.4"]
 google-genai = ["pydantic-ai-slim[google]>=0.7.4"]
 

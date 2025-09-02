@@ -1,10 +1,16 @@
 from datetime import datetime
 from typing import Any
 
-import psycopg
-from psycopg.connection import Connection
-from psycopg.rows import DictRow, dict_row
-from psycopg.sql import SQL, Identifier
+try:
+    import psycopg
+    from psycopg.connection import Connection
+    from psycopg.rows import DictRow, dict_row
+    from psycopg.sql import SQL, Identifier
+except ModuleNotFoundError as exc:
+    raise ImportError(
+        "psycopg is required for PostgreSQL support. "
+        "Install it with: pip install 'wandern[postgresql]'"
+    ) from exc
 
 from wandern.databases.base import BaseProvider
 from wandern.exceptions import ConnectError

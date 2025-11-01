@@ -10,7 +10,7 @@ from wandern.constants import DEFAULT_FILE_FORMAT, DEFAULT_MIGRATION_TABLE
 class DatabaseProviders(StrEnum):
     POSTGRESQL = "postgresql"
     SQLITE = "sqlite"
-    MYSQL = "mysql"  # FUTURE: not implemented
+    MYSQL = "mysql"
     MSSQL = "mssql"  # FUTURE: not implemented
 
 

@@ -11,5 +11,9 @@ def get_database_impl(provider: DatabaseProviders | str, config: Config):
         from wandern.databases.sqlite import SQLiteProvider
 
         return SQLiteProvider(config=config)
+    elif provider == DatabaseProviders.MYSQL:
+        from wandern.databases.mysql import MySQLProvider
+
+        return MySQLProvider(config=config)
     else:
         raise NotImplementedError(f"Provider {provider!s} is not implemented yet!")

@@ -1,6 +1,6 @@
 [project]
 name = "wandern"
-version = "0.0.3"
+version = "0.0.4"
 authors = [{ name = "Shiladitya Bose", email = "shiladitya_basu@live.com" }]
 description = "Wandern is a small, no-nonsense database migration tool for python"
 readme = "README.md"
@@ -31,6 +31,7 @@ Issues = "https://github.com/s-bose/wandern/issues"
 postgresql = [
     "psycopg[binary]>=3.2.9",
 ]
+mysql = ["mysql-connector-python>=9.4.0"]
 openai = ["pydantic-ai-slim[openai]>=0.7.4"]
 google-genai = ["pydantic-ai-slim[google]>=0.7.4"]
 
@@ -54,6 +55,8 @@ dev-dependencies = ["pytest>=8.3.3", "pytest-asyncio>=0.24.0"]
 dev = ["pre-commit>=4.3.0", "ruff>=0.12.7", "types-networkx>=3.4.2.20250509"]
 test = [
     "psycopg[binary]>=3.2.9",
+    "mysql-connector-python>=9.4.0",
     "pytest-cov>=6.2.1",
     "testcontainers[postgres]>=4.12.0",
+    "testcontainers[mysql]>=4.12.0",
 ]

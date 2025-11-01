@@ -1,5 +1,6 @@
 import pytest
 
+from wandern.databases.mysql import MySQLProvider
 from wandern.databases.postgresql import PostgresProvider
 from wandern.databases.provider import get_database_impl
 from wandern.databases.sqlite import SQLiteProvider
@@ -33,24 +34,38 @@ def test_get_database_impl_sqlite():
     provider = get_database_impl("sqlite", config)
     assert isinstance(provider, SQLiteProvider)
 
+def test_get_database_impl_mysql():
+    """Test get_database_impl returns MySQLProvider for mysql."""
+    config = Config(
+        dsn="mysql://user:pass@localhost:3306/test", migration_dir="./migrations"
+    )
+
+    # Test with enum
+    provider = get_database_impl(DatabaseProviders.MYSQL, config)
+    assert isinstance(provider, MySQLProvider)
+
+    # Test with string
+    provider = get_database_impl("mysql", config)
+    assert isinstance(provider, MySQLProvider)
+
 
 def test_get_database_impl_unsupported():
     """Test get_database_impl raises NotImplementedError for unsupported providers."""
     config = Config(
-        dsn="mysql://user:pass@localhost/test", migration_dir="./migrations"
+        dsn="mssql://user:pass@localhost/test", migration_dir="./migrations"
     )
 
     # Test with enum
     with pytest.raises(
-        NotImplementedError, match="Provider mysql is not implemented yet!"
+        NotImplementedError, match="Provider mssql is not implemented yet!"
     ):
-        get_database_impl(DatabaseProviders.MYSQL, config)
+        get_database_impl(DatabaseProviders.MSSQL, config)
 
     # Test with string
     with pytest.raises(
-        NotImplementedError, match="Provider mysql is not implemented yet!"
+        NotImplementedError, match="Provider mssql is not implemented yet!"
     ):
-        get_database_impl("mysql", config)
+        get_database_impl("mssql", config)
 
 
 def test_get_database_impl_provider_type_conversion():

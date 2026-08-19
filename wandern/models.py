@@ -75,4 +75,4 @@ class Revision(BaseModel):
             default_factory=datetime.now,
             description="Time when the revision was created",
         ),
-    ] = datetime.now()
+    ]
